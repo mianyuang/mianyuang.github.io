@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>React面向组件编程 | 小高笔记</title>
+    <meta name="generator" content="VuePress 1.9.7">
+    <link ref="icon" href="/favicon.ico">
+    <meta name="description" content="">
+    
+    <link rel="preload" href="/assets/css/0.styles.35bcedcf.css" as="style"><link rel="preload" href="/assets/js/app.d13f59f1.js" as="script"><link rel="preload" href="/assets/js/2.53646e3a.js" as="script"><link rel="preload" href="/assets/js/13.5507d9bc.js" as="script"><link rel="prefetch" href="/assets/js/10.5ccc8fdd.js"><link rel="prefetch" href="/assets/js/11.aa33a8de.js"><link rel="prefetch" href="/assets/js/12.993b4d84.js"><link rel="prefetch" href="/assets/js/14.0048d491.js"><link rel="prefetch" href="/assets/js/15.0455f1d1.js"><link rel="prefetch" href="/assets/js/16.f911e976.js"><link rel="prefetch" href="/assets/js/17.2510d920.js"><link rel="prefetch" href="/assets/js/18.e2e23205.js"><link rel="prefetch" href="/assets/js/19.d5043b46.js"><link rel="prefetch" href="/assets/js/20.07b6a18c.js"><link rel="prefetch" href="/assets/js/21.60063212.js"><link rel="prefetch" href="/assets/js/22.0bc5fe12.js"><link rel="prefetch" href="/assets/js/23.9a2edd04.js"><link rel="prefetch" href="/assets/js/24.dac6e202.js"><link rel="prefetch" href="/assets/js/25.156ad714.js"><link rel="prefetch" href="/assets/js/26.b27149f5.js"><link rel="prefetch" href="/assets/js/27.6d559b79.js"><link rel="prefetch" href="/assets/js/28.c42a444d.js"><link rel="prefetch" href="/assets/js/29.4836f5f1.js"><link rel="prefetch" href="/assets/js/3.bb50f79a.js"><link rel="prefetch" href="/assets/js/30.37b5d171.js"><link rel="prefetch" href="/assets/js/31.919c37fa.js"><link rel="prefetch" href="/assets/js/32.c5479266.js"><link rel="prefetch" href="/assets/js/33.ef7cdcee.js"><link rel="prefetch" href="/assets/js/34.0d49d121.js"><link rel="prefetch" href="/assets/js/35.a96ba84d.js"><link rel="prefetch" href="/assets/js/36.280625b4.js"><link rel="prefetch" href="/assets/js/37.a1358acd.js"><link rel="prefetch" href="/assets/js/38.d6dbc7ba.js"><link rel="prefetch" href="/assets/js/39.97b4bcfd.js"><link rel="prefetch" href="/assets/js/4.35661e66.js"><link rel="prefetch" href="/assets/js/40.684a77c3.js"><link rel="prefetch" href="/assets/js/41.5ef9d50f.js"><link rel="prefetch" href="/assets/js/42.444f193c.js"><link rel="prefetch" href="/assets/js/43.e6bf2917.js"><link rel="prefetch" href="/assets/js/44.6241887c.js"><link rel="prefetch" href="/assets/js/45.ee459281.js"><link rel="prefetch" href="/assets/js/46.42a39b62.js"><link rel="prefetch" href="/assets/js/47.96607b08.js"><link rel="prefetch" href="/assets/js/48.2dc75c63.js"><link rel="prefetch" href="/assets/js/49.1404ad3e.js"><link rel="prefetch" href="/assets/js/5.2a73e3c3.js"><link rel="prefetch" href="/assets/js/50.eaa708d4.js"><link rel="prefetch" href="/assets/js/51.813059e2.js"><link rel="prefetch" href="/assets/js/52.b2b30732.js"><link rel="prefetch" href="/assets/js/53.83e35218.js"><link rel="prefetch" href="/assets/js/54.5114b1c2.js"><link rel="prefetch" href="/assets/js/55.31992a29.js"><link rel="prefetch" href="/assets/js/56.9d768f0f.js"><link rel="prefetch" href="/assets/js/57.ed73a721.js"><link rel="prefetch" href="/assets/js/58.be77d415.js"><link rel="prefetch" href="/assets/js/59.8ef3b6a8.js"><link rel="prefetch" href="/assets/js/6.191aaf39.js"><link rel="prefetch" href="/assets/js/60.4fd87fd0.js"><link rel="prefetch" href="/assets/js/61.361e594c.js"><link rel="prefetch" href="/assets/js/62.3801fa63.js"><link rel="prefetch" href="/assets/js/63.fb124fab.js"><link rel="prefetch" href="/assets/js/64.bdb473d5.js"><link rel="prefetch" href="/assets/js/65.8b14388b.js"><link rel="prefetch" href="/assets/js/66.6ad4e223.js"><link rel="prefetch" href="/assets/js/67.caf1ddfb.js"><link rel="prefetch" href="/assets/js/68.84d22d1b.js"><link rel="prefetch" href="/assets/js/69.2411fe3a.js"><link rel="prefetch" href="/assets/js/7.029c4464.js"><link rel="prefetch" href="/assets/js/70.b310e685.js"><link rel="prefetch" href="/assets/js/71.0e077ea4.js"><link rel="prefetch" href="/assets/js/72.2b6d7f80.js"><link rel="prefetch" href="/assets/js/73.c3e37b24.js"><link rel="prefetch" href="/assets/js/8.37f8fc14.js"><link rel="prefetch" href="/assets/js/9.9b32826c.js">
+    <link rel="stylesheet" href="/assets/css/0.styles.35bcedcf.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/" class="home-link router-link-active"><!----> <span class="site-name">小高笔记</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/" class="nav-link">
+  首页
+</a></div><div class="nav-item"><a href="/pages/miscellaneous/reg/reg.html" class="nav-link">
+  杂记
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="前端" class="dropdown-title"><span class="title">前端</span> <span class="arrow down"></span></button> <button type="button" aria-label="前端" class="mobile-dropdown-title"><span class="title">前端</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/pages/frontend/htmlcssLearn.html" class="nav-link">
+  html+css3+移动前端
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/js.html" class="nav-link">
+  javaScript
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/jses6.html" class="nav-link">
+  javaScript-es6
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/ts.html" class="nav-link">
+  typeScript
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/nodejs.html" class="nav-link">
+  nodeJs
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/webpack/webpack.html" class="nav-link">
+  webpack
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/react/react.html" class="nav-link">
+  react
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/vue/vue.html" class="nav-link">
+  vue
+</a></li></ul></div></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="后端" class="dropdown-title"><span class="title">后端</span> <span class="arrow down"></span></button> <button type="button" aria-label="后端" class="mobile-dropdown-title"><span class="title">后端</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/pages/backend/java.html" class="nav-link">
+  java
+</a></li></ul></div></div> <!----></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/" class="nav-link">
+  首页
+</a></div><div class="nav-item"><a href="/pages/miscellaneous/reg/reg.html" class="nav-link">
+  杂记
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="前端" class="dropdown-title"><span class="title">前端</span> <span class="arrow down"></span></button> <button type="button" aria-label="前端" class="mobile-dropdown-title"><span class="title">前端</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/pages/frontend/htmlcssLearn.html" class="nav-link">
+  html+css3+移动前端
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/js.html" class="nav-link">
+  javaScript
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/jses6.html" class="nav-link">
+  javaScript-es6
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/ts.html" class="nav-link">
+  typeScript
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/nodejs.html" class="nav-link">
+  nodeJs
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/webpack/webpack.html" class="nav-link">
+  webpack
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/react/react.html" class="nav-link">
+  react
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/vue/vue.html" class="nav-link">
+  vue
+</a></li></ul></div></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="后端" class="dropdown-title"><span class="title">后端</span> <span class="arrow down"></span></button> <button type="button" aria-label="后端" class="mobile-dropdown-title"><span class="title">后端</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/pages/backend/java.html" class="nav-link">
+  java
+</a></li></ul></div></div> <!----></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading open"><span>react</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/pages/frontend/react/jsx语法规则/jsx语法规则.html" class="sidebar-link">jsx语法规则</a></li><li><a href="/pages/frontend/react/React面向组件编程/React面向组件编程.html" class="active sidebar-link">React面向组件编程</a></li><li><section class="sidebar-group collapsable is-sub-group depth-1"><p class="sidebar-heading"><span>react应用</span> <span class="arrow right"></span></p> <!----></section></li><li><a href="/pages/frontend/react/react拓展/react拓展.html" class="sidebar-link">react拓展</a></li></ul></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="react面向组件编程"><a href="#react面向组件编程" class="header-anchor">#</a> React面向组件编程</h1> <h4 id="什么是组件"><a href="#什么是组件" class="header-anchor">#</a> 什么是组件？</h4> <p>一个可复用的的页面，组件允许你将 UI 拆分为独立可复用的代码片段。</p> <h4 id="组件类别"><a href="#组件类别" class="header-anchor">#</a> 组件类别</h4> <p><strong>函数式组件：</strong></p> <p>定义函数式组件：</p> <div class="language-javascript extra-class"><pre class="language-javascript"><code> <span class="token comment">//1、定义函数式组件</span>
+ <span class="token keyword">function</span> <span class="token function">Demo</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+     <span class="token keyword">return</span> <span class="token operator">&lt;</span>h2<span class="token operator">&gt;</span>函数式组件定义<span class="token operator">&lt;</span><span class="token operator">/</span>h2<span class="token operator">&gt;</span>
+ <span class="token punctuation">}</span>
+<span class="token comment">//2、渲染组件到页面</span>
+ReactDOM<span class="token punctuation">.</span><span class="token function">render</span><span class="token punctuation">(</span><span class="token operator">&lt;</span>Demo<span class="token operator">/</span><span class="token operator">&gt;</span><span class="token punctuation">,</span> document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">'test'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre></div><p>React解析组件标签，找到组件，发现组件是使用函数式定义的，随后调用该函数，把返回的虚拟DOM转为真实DOM，呈现在页面中。</p> <p><strong>类式组件：</strong></p> <p>定义类式组件：</p> <div class="language-javascript extra-class"><pre class="language-javascript"><code><span class="token comment">//1、定义类式组件</span>
+<span class="token comment">//继承react.Component类，调用原型对象上的render方法。</span>
+<span class="token keyword">class</span> <span class="token class-name">Demo</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span><span class="token punctuation">{</span>
+   <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+     <span class="token keyword">return</span> <span class="token operator">&lt;</span>h2<span class="token operator">&gt;</span>类式组件<span class="token operator">&lt;</span><span class="token operator">/</span>h2<span class="token operator">&gt;</span>
+   <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token comment">//2、渲染组件到页面</span>
+ReactDOM<span class="token punctuation">.</span><span class="token function">render</span><span class="token punctuation">(</span><span class="token operator">&lt;</span>Demo<span class="token operator">/</span><span class="token operator">&gt;</span><span class="token punctuation">,</span> document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">'test'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre></div><p>React解析组件标签，找到组件，发现组件是使用类式定义的，随后new出该类的实例，并通过该实例调用到原型上的render方法，把返回的虚拟DOM转为真实DOM，呈现在页面中。</p> <h4 id="组件三大属性"><a href="#组件三大属性" class="header-anchor">#</a> 组件三大属性</h4> <p><strong>state状态属性</strong></p> <p>如何理解组件状态？</p> <p>举个例子：一个人，他的状态则会影响这个人所做出的行为，同样，组件也类似，组件的状态影响的是页面的展示。</p> <ul><li><p>state状态是组件对象最重要的属性，值是对象，可以包含多个key-value组合。</p></li> <li><p>组件被称为状态机，通过更新组件的state来更新对应的页面显示（重新渲染组件）。</p></li></ul> <p>初始化state</p> <p>小例子：通过点击标题来改变isHot的值，来重新渲染页面内容。</p> <ol><li><p>定义组件</p> <div class="language-javascript extra-class"><pre class="language-javascript"><code><span class="token comment">//1、定义类式组件</span>
+<span class="token keyword">class</span> <span class="token class-name">Demo</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+    <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">//编写类的构造器，props接收外部传入参数</span>
+       <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+       <span class="token keyword">this</span><span class="token punctuation">.</span>state <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token literal-property property">isHot</span><span class="token operator">:</span> <span class="token boolean">false</span> <span class="token punctuation">}</span><span class="token punctuation">;</span> <span class="token comment">//重新为state赋值</span>
+      <span class="token punctuation">}</span>
+     <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token operator">&lt;</span>h2<span class="token operator">&gt;</span>今天天气很<span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">.</span>isHot <span class="token operator">?</span> <span class="token string">'炎热'</span><span class="token operator">:</span><span class="token string">'凉爽'</span><span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>h2<span class="token operator">&gt;</span><span class="token punctuation">;</span>
+       <span class="token punctuation">}</span>
+     <span class="token punctuation">}</span>
+<span class="token comment">//2、渲染组件到页面</span>
+ReactDOM<span class="token punctuation">.</span><span class="token function">render</span><span class="token punctuation">(</span><span class="token operator">&lt;</span>Demo <span class="token operator">/</span><span class="token operator">&gt;</span><span class="token punctuation">,</span> document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">&quot;test&quot;</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre></div></li> <li><p>给标题h2添加上点击事件，点击修改isHot的值。</p> <p>要解决react类中this的问题？</p> <p>由于react类中方法是放在原型对象上的，在作为事件回调时，不是通过实例对象调用的，是直接调用，类中的方法默认开启局部严格模式，方法中this是undefined。</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>//1、定义类式组件
+class Demo extends React.Component {
+    constructor(props) { //编写类的构造器，props接收外部传入参数
+       super(props);
+       this.state = { isHot: false }; //重新为state赋值
+      }
+     render() {
+        console.log(this);
+        return &lt;h2 onClick={this.changeWeather}&gt;今天天气很{this.state.isHot ? '炎热':'凉爽'}&lt;/h2&gt;;
+       }
+     changeWeather(){
+       //changeWeather方法放在原型对象上
+       //由于changeWeather是作为onClick的回调，所以不是通过实例调用的，是直接调用的
+       //类中的方法默认开启了局部严格模式，所以changeWeather中的this是undefined
+     }
+    }
+//2、渲染组件到页面
+ReactDOM.render(&lt;Demo /&gt;, document.getElementById(&quot;test&quot;));
+</code></pre></div><p>解决this指向问题</p> <p>可以通过bind函数来重新指向this，传入的第一个参数为this的指向，返回一个新的函数。</p> <p><code>this.a = this.changeWeather.bind(this)</code></p> <p>在构造器中通过原型对象上的<code>changeWeather</code>方法调用bind方法，传入this，返回一个新的函数赋值给属性a</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>//1、定义类式组件
+class Demo extends React.Component {
+    constructor(props) { //编写类的构造器，props接收外部传入参数
+       super(props);
+       this.state = { isHot: false }; //重新为state赋值
+       //解决this指向问题
+       this.a = this.changeWeather.bind(this)
+      }
+     render() {
+        console.log(this);
+        return &lt;h2 onClick={this.a}&gt;今天天气很{this.state.isHot ? '炎热':'凉爽'}&lt;/h2&gt;;
+       }
+     changeWeather(){
+       
+       //changeWeather方法放在原型对象上
+       //由于changeWeather是作为onClick的回调，所以不是通过实例调用的，是直接调用的
+       //类中的方法默认开启了局部严格模式，所以changeWeather中的this是undefined
+     }
+    }
+//2、渲染组件到页面
+ReactDOM.render(&lt;Demo /&gt;, document.getElementById(&quot;test&quot;));
+</code></pre></div></li> <li><p>使用setState方法改变state的值，才能引起页面页面重新渲染</p> <p>状态必须通过setState方法来更改弥补你呢个直接更改。</p> <p>这种写法是错误的，不被react所接受</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>this.state.isHot=!this.state.isHot
+
+</code></pre></div><p>正确写法：</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>this.setState({isHot:!this.state.isHot})
+</code></pre></div></li> <li><p>重新简写代码</p> <ol><li><p>把state属性从构造函数抽出来，写到类里面，代表实例对象上的属性，每一个new出来的实例对象都有该属性。</p></li> <li><p>解决事件回调函数中this问题，使用箭头函数，因为箭头函数this会往外查找，会找到实例对象本身。</p></li></ol> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>      //1、定义类式组件
+      class Demo extends React.Component {
+        state = { isHot: false };
+        render() {
+          return (
+            &lt;h2 onClick={this.clickTitle}&gt;
+              今天天气很{this.state.isHot ? &quot;炎热&quot; : &quot;凉爽&quot;}
+            &lt;/h2&gt;
+          );
+        }
+        clickTitle=()=&gt; {
+          this.setState({isHot:!this.state.isHot})
+        }
+      }
+      //2、渲染组件到页面
+      ReactDOM.render(&lt;Demo /&gt;, document.getElementById(&quot;test&quot;));
+</code></pre></div></li></ol> <h4 id="props属性"><a href="#props属性" class="header-anchor">#</a> props属性</h4> <p>props属性用来接收外部传入的属性，可以在组件内使用。</p> <p>props属性的基本使用：</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>      //1、定义类式组件
+      class Demo extends React.Component {
+        render() {
+          const {name, age, sex} = this.props
+          return (
+           &lt;ul&gt;
+              &lt;li&gt;姓名：{name}&lt;/li&gt;
+              &lt;li&gt;年龄：{age}&lt;/li&gt;
+              &lt;li&gt;性别：{sex}&lt;/li&gt;
+            &lt;/ul&gt;
+          );
+        }
+      }
+      //2、渲染组件到页面
+      // 在组件外部使用key=value形式向组件内部传递数据
+      ReactDOM.render(&lt;Demo name=&quot;test&quot; age=&quot;18&quot; sex=&quot;男&quot;/&gt;, document.getElementById(&quot;test&quot;));
+</code></pre></div><p>批量传递属性：可使用...扩展运算符</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>      //1、定义类式组件
+      class Demo extends React.Component {
+        render() {
+          const {name, age, sex} = this.props
+          return (
+           &lt;ul&gt;
+              &lt;li&gt;姓名：{name}&lt;/li&gt;
+              &lt;li&gt;年龄：{age}&lt;/li&gt;
+              &lt;li&gt;性别：{sex}&lt;/li&gt;
+            &lt;/ul&gt;
+          );
+        }
+      }
+      //2、渲染组件到页面
+      const p = {name:&quot;test&quot;, age:&quot;18&quot;, sex:&quot;男&quot;}
+      ReactDOM.render(&lt;Demo {...p}/&gt;, document.getElementById(&quot;test&quot;));
+</code></pre></div><p>props属性限制：</p> <ol><li><p>引入propstypejs文件</p></li> <li><p>在类里面定义<code>propTypes</code>属性</p> <p>propTypes定义类型限制：接受PropTypes类</p> <p>defaultProps定义属性默认值</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>      //1、定义类式组件
+      class Demo extends React.Component {
+        render() {
+          const {name, age, sex} = this.props
+          return (
+           &lt;ul&gt;
+              &lt;li&gt;姓名：{name}&lt;/li&gt;
+              &lt;li&gt;年龄：{age}&lt;/li&gt;
+              &lt;li&gt;性别：{sex}&lt;/li&gt;
+            &lt;/ul&gt;
+          );
+        }
+        //接受属性类型限制
+        static propTypes={name:PropTypes.string.isRequired}
+        //属性默认值
+        static defaultProps={sex:'男'}
+      }
+      //2、渲染组件到页面
+      const p = {name:&quot;test&quot;, age:&quot;18&quot;, sex:&quot;男&quot;}
+      ReactDOM.render(&lt;Demo {...p}/&gt;, document.getElementById(&quot;test&quot;));
+</code></pre></div></li></ol> <h4 id="refs属性"><a href="#refs属性" class="header-anchor">#</a> refs属性</h4> <p>理解：组件内的标签定义ref来标识自己，取得真实DOM元素。</p> <p>ref的简单使用：</p> <ol><li><p>字符串形式的ref：（官方废弃，不推荐使用）</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>     //1、定义类式组件
+      class Demo extends React.Component {
+        render() {
+          const { name, age, sex } = this.props;
+          return (
+            &lt;div&gt;
+              &lt;input ref=&quot;input1&quot; type=&quot;text&quot; /&gt;
+              &lt;button onClick={this.clickBtn}&gt;点击按钮&lt;/button&gt;
+            &lt;/div&gt;
+          );
+        }
+        clickBtn=()=&gt;{
+          alert(this.refs.input1.value)
+        }
+      }
+      //2、渲染组件到页面
+      ReactDOM.render(&lt;Demo  /&gt;, document.getElementById(&quot;test&quot;));
+</code></pre></div></li> <li><p>回调形式的ref：</p> <p><code>ref={(currentNode)=&gt;{this.input1 = currentNode}};</code>回调函数接收一个参数，参数为当前节点</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>      //1、定义类式组件
+      class Demo extends React.Component {
+        render() {
+          const { name, age, sex } = this.props;
+          return (
+            &lt;div&gt;
+              &lt;input ref={currentNode=&gt;this.input1=currentNode} type=&quot;text&quot; /&gt;
+              &lt;button onClick={this.clickBtn}&gt;点击按钮&lt;/button&gt;
+            &lt;/div&gt;
+          );
+        }
+        clickBtn=()=&gt;{
+          alert(this.input1.value)
+        }
+      }
+      //2、渲染组件到页面
+      ReactDOM.render(&lt;Demo  /&gt;, document.getElementById(&quot;test&quot;));
+</code></pre></div><p>注意点：</p> <p>如果 <code>ref</code> 回调函数是以内联函数的方式定义的，在更新过程中它会被执行两次，第一次传入参数 <code>null</code>，然后第二次会传入参数 DOM 元素。这是因为在每次渲染时会创建一个新的函数实例，所以 React 清空旧的 ref 并且设置新的。通过将 ref 的回调函数定义成 class 的绑定函数的方式可以避免上述问题，但是大多数情况下它是无关紧要的。</p> <p>ref 的回调函数定义成 class 的绑定函数：</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>     //1、定义类式组件
+      class Demo extends React.Component {
+        render() {
+          const { name, age, sex } = this.props;
+          return (
+            &lt;div&gt;
+              &lt;input ref={this.bindInput} type=&quot;text&quot; /&gt;
+              &lt;button onClick={this.clickBtn}&gt;点击按钮&lt;/button&gt;
+            &lt;/div&gt;
+          );
+        }
+        clickBtn=()=&gt;{
+          alert(this.input1.value)
+        }
+        bindInput=currentNode=&gt;this.input1=currentNode
+      }
+      //2、渲染组件到页面
+      ReactDOM.render(&lt;Demo  /&gt;, document.getElementById(&quot;test&quot;));
+</code></pre></div></li> <li><p>通过<code>React.createRef()</code>函数创建，该函数返回一个容器，该容器可以存储被ref所标识的节点，只能存储一个。（当前推荐写法）</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>      //1、定义类式组件
+      class Demo extends React.Component {
+        myRef = React.createRef();
+        render() {
+          return (
+            &lt;div&gt;
+              &lt;input ref={this.myRef} type=&quot;text&quot; /&gt;
+              &lt;button onClick={this.clickBtn}&gt;点击按钮&lt;/button&gt;
+            &lt;/div&gt;
+          );
+        }
+        clickBtn = () =&gt; {
+          alert(this.myRef.current.value);
+        };
+      }
+      //2、渲染组件到页面
+      ReactDOM.render(&lt;Demo /&gt;, document.getElementById(&quot;test&quot;));
+</code></pre></div></li></ol> <h4 id="非受控组件和受控组件"><a href="#非受控组件和受控组件" class="header-anchor">#</a> 非受控组件和受控组件</h4> <p>非受控组件：(不推荐使用)</p> <p>获取DOM元素的值时，过度会使用多ref来获取元素value。</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>      //1、定义类式组件
+      class Login extends React.Component {
+        usernameRef = React.createRef();
+        passwordRef = React.createRef();
+        submit = (event) =&gt; {
+          event.preventDefault();
+          alert(`用户名：${this.usernameRef.current.value}，密码：${this.passwordRef.current.value}`)
+        };
+        render() {
+          return (
+            &lt;form onSubmit={this.submit}&gt;
+              用户名：
+              &lt;input type=&quot;text&quot; name=&quot;username&quot; ref={this.usernameRef} /&gt;
+              密码：
+              &lt;input type=&quot;password&quot; name=&quot;password&quot; ref={this.passwordRef} /&gt;
+              &lt;button&gt;登陆&lt;/button&gt;
+            &lt;/form&gt;
+          );
+        }
+      }
+      //2、渲染组件到页面
+      ReactDOM.render(&lt;Login /&gt;, document.getElementById(&quot;test&quot;));
+</code></pre></div><p>受控组件：</p> <p>类似VUE中的双向绑定数据，使用onChange事件来获取DOM元素value，减少ref的使用,使用状态state属性来存储数据。</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>      //1、定义类式组件
+      class Login extends React.Component {
+        state = {
+          username: &quot;&quot;,
+          password: &quot;&quot;,
+        };
+        usernameChange = (event) =&gt; {
+          this.setState({ username: event.target.value });
+        };
+        passwordChange = (event) =&gt; {
+          this.setState({ password: event.target.value });
+        };
+        submit = (event) =&gt; {
+          event.preventDefault();
+          alert(
+            `用户名：${this.state.username}，密码：${this.state.password}`
+          );
+        };
+        render() {
+          return (
+            &lt;form onSubmit={this.submit}&gt;
+              用户名：
+              &lt;input type=&quot;text&quot; name=&quot;username&quot; onChange={this.usernameChange} /&gt;
+              密码：
+              &lt;input
+                type=&quot;password&quot;
+                name=&quot;password&quot;
+                onChange={this.passwordChange}
+              /&gt;
+              &lt;button&gt;登陆&lt;/button&gt;
+            &lt;/form&gt;
+          );
+        }
+      }
+      //2、渲染组件到页面
+      ReactDOM.render(&lt;Login /&gt;, document.getElementById(&quot;test&quot;));
+</code></pre></div><p>优化写法：</p> <p>把onChange事件中调用同一个方法，传递不同的参数来控制。</p> <p>注意点：事件回调函数中一定是要给它返回一个函数，不是函数则不能执行相应回调。</p> <p>第一种：</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>     //1、定义类式组件
+      class Login extends React.Component {
+        state = {
+          username: &quot;&quot;,
+          password: &quot;&quot;,
+        };
+        saveFormData=(dataType)=&gt;{
+          return (event)=&gt;{
+            this.setState({[dataType]:event.target.value})
+          }
+        }
+        submit = (event) =&gt; {
+          event.preventDefault();
+          alert(
+            `用户名：${this.state.username}，密码：${this.state.password}`
+          );
+        };
+        render() {
+          return (
+            &lt;form onSubmit={this.submit}&gt;
+              用户名：
+              &lt;input type=&quot;text&quot; name=&quot;username&quot; onChange={this.saveFormData('username')} /&gt;
+              密码：
+              &lt;input
+                type=&quot;password&quot;
+                name=&quot;password&quot;
+                onChange={this.saveFormData('password')}
+              /&gt;
+              &lt;button&gt;登陆&lt;/button&gt;
+            &lt;/form&gt;
+          );
+        }
+      }
+      //2、渲染组件到页面
+      ReactDOM.render(&lt;Login /&gt;, document.getElementById(&quot;test&quot;));
+</code></pre></div><p>第二种：</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>    //1、定义类式组件
+      class Login extends React.Component {
+        state = {
+          username: &quot;&quot;,
+          password: &quot;&quot;,
+        };
+        saveFormData=(dataType,event)=&gt;{
+            this.setState({[dataType]:event.target.value})
+        }
+        submit = (event) =&gt; {
+          event.preventDefault();
+          alert(
+            `用户名：${this.state.username}，密码：${this.state.password}`
+          );
+        };
+        render() {
+          return (
+            &lt;form onSubmit={this.submit}&gt;
+              用户名：
+              &lt;input type=&quot;text&quot; name=&quot;username&quot; onChange={event=&gt;this.saveFormData('username',event)} /&gt;
+              密码：
+              &lt;input
+                type=&quot;password&quot;
+                name=&quot;password&quot;
+                onChange={event=&gt;this.saveFormData('password',event)}
+              /&gt;
+              &lt;button&gt;登陆&lt;/button&gt;
+            &lt;/form&gt;
+          );
+        }
+      }
+      //2、渲染组件到页面
+      ReactDOM.render(&lt;Login /&gt;, document.getElementById(&quot;test&quot;));
+</code></pre></div><h4 id="组件的生命周期"><a href="#组件的生命周期" class="header-anchor">#</a> 组件的生命周期</h4> <p>组件初始化挂载到节点上，取消挂载的过程称之为组件的生命周期。</p> <p><strong>旧版本生命周期：</strong></p> <p><img src="/assets/img/14_Zfn-lMTvkx.b25d9f60.png" alt=""></p> <p>生命周期主要分为三个阶段：</p> <ol><li><p>初始化阶段：由<code>ReactDOM.render()</code>触发—&gt;初次渲染</p> <ol><li><p><code>constructor</code></p></li> <li><p><code>componentWillMount</code></p></li> <li><p><code>render</code></p></li> <li><p><code>componentDidMount</code></p></li></ol></li> <li><p>更新阶段：由<code>setState()</code>或者父组件重新<code>render</code>触发：</p> <ol><li><p><code>shouldComponentUpdate</code> 该函数返回<code>false</code>，则不会进行下面的钩子函数，不会重新渲染页面。</p></li> <li><p><code>componentWillUpdate</code></p></li> <li><p><code>render</code></p></li> <li><p><code>componentDidUpdate</code></p></li></ol></li> <li><p>卸载组件：由<code>ReactDOM.unmountComponentAtNode()</code>函数触发</p> <ol><li><code>compomentWillUnmount</code></li></ol></li></ol> <p>生命周期函数：</p> <p><code>componetDidMount()</code>组件实例化完成，组件挂载到页面后调用的生命周期钩子函数。</p> <p><code>ReactDOM.unmountComponentAtNode(node)</code>卸载组件，取消组件的挂载。</p> <p><code>componentWillUnmount()</code>组件卸载之前调用的钩子函数。</p> <p><strong>新版本生命周期</strong>：</p> <p><img src="/assets/img/40_T6g5JyWphS.e3d0b032.png" alt=""></p> <p>生命周期主要分为三个阶段：</p> <ol><li><p>初始化阶段：由<code>ReactDOM.render()</code>触发—&gt;初次渲染</p> <ol><li><p><code>constructor</code></p></li> <li><p><code>getDerivedStateFromProps</code></p></li> <li><p><code>render</code></p></li> <li><p><code>componentDidMount</code></p></li></ol></li> <li><p>更新阶段：由<code>setState()</code>或者父组件重新<code>render</code>触发：</p> <ol><li><p><code>getDerivedStateFromProps</code></p></li> <li><p><code>shouldComponentUpdate</code></p></li> <li><p><code>render</code></p></li> <li><p><code>getSnapshotBeforeUpdate</code></p></li> <li><p><code>componentDidUpdate</code></p></li></ol></li> <li><p>卸载组件：由<code>ReactDOM.unmountComponentAtNode()</code>函数触发</p> <ol><li><code>compomentWillUnmount</code></li></ol></li></ol> <p><code>getDerivedStateFromProps</code> 钩子需要返回一个state对象或者null，使用场景state的值取决于props属性时，可以使用此钩子函数。</p> <p><code>getSnapshotBeforeUpdate</code>钩子需要返回一个null或者一个value值，这个值会传递到<code>componentDidUpdate</code>中来使用。</p> <p><strong>新旧对比：</strong></p> <p>少了3个生命周期钩子，多了2个生命周期钩子。</p> <h4 id="dom的diffing算法"><a href="#dom的diffing算法" class="header-anchor">#</a> DOM的Diffing算法</h4></div> <footer class="page-edit"><!----> <!----></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/pages/frontend/react/jsx语法规则/jsx语法规则.html" class="prev">
+        jsx语法规则
+      </a></span> <span class="next"><a href="/pages/frontend/react/react应用/React应用-基于React脚手架.html">
+        React应用-基于React脚手架
+      </a>
+      →
+    </span></p></div> </main></div><div class="global-ui"></div></div>
+    <script src="/assets/js/app.d13f59f1.js" defer></script><script src="/assets/js/2.53646e3a.js" defer></script><script src="/assets/js/13.5507d9bc.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>React-路由 | 小高笔记</title>
+    <meta name="generator" content="VuePress 1.9.7">
+    <link ref="icon" href="/favicon.ico">
+    <meta name="description" content="">
+    
+    <link rel="preload" href="/assets/css/0.styles.35bcedcf.css" as="style"><link rel="preload" href="/assets/js/app.d13f59f1.js" as="script"><link rel="preload" href="/assets/js/2.53646e3a.js" as="script"><link rel="preload" href="/assets/js/26.b27149f5.js" as="script"><link rel="prefetch" href="/assets/js/10.5ccc8fdd.js"><link rel="prefetch" href="/assets/js/11.aa33a8de.js"><link rel="prefetch" href="/assets/js/12.993b4d84.js"><link rel="prefetch" href="/assets/js/13.5507d9bc.js"><link rel="prefetch" href="/assets/js/14.0048d491.js"><link rel="prefetch" href="/assets/js/15.0455f1d1.js"><link rel="prefetch" href="/assets/js/16.f911e976.js"><link rel="prefetch" href="/assets/js/17.2510d920.js"><link rel="prefetch" href="/assets/js/18.e2e23205.js"><link rel="prefetch" href="/assets/js/19.d5043b46.js"><link rel="prefetch" href="/assets/js/20.07b6a18c.js"><link rel="prefetch" href="/assets/js/21.60063212.js"><link rel="prefetch" href="/assets/js/22.0bc5fe12.js"><link rel="prefetch" href="/assets/js/23.9a2edd04.js"><link rel="prefetch" href="/assets/js/24.dac6e202.js"><link rel="prefetch" href="/assets/js/25.156ad714.js"><link rel="prefetch" href="/assets/js/27.6d559b79.js"><link rel="prefetch" href="/assets/js/28.c42a444d.js"><link rel="prefetch" href="/assets/js/29.4836f5f1.js"><link rel="prefetch" href="/assets/js/3.bb50f79a.js"><link rel="prefetch" href="/assets/js/30.37b5d171.js"><link rel="prefetch" href="/assets/js/31.919c37fa.js"><link rel="prefetch" href="/assets/js/32.c5479266.js"><link rel="prefetch" href="/assets/js/33.ef7cdcee.js"><link rel="prefetch" href="/assets/js/34.0d49d121.js"><link rel="prefetch" href="/assets/js/35.a96ba84d.js"><link rel="prefetch" href="/assets/js/36.280625b4.js"><link rel="prefetch" href="/assets/js/37.a1358acd.js"><link rel="prefetch" href="/assets/js/38.d6dbc7ba.js"><link rel="prefetch" href="/assets/js/39.97b4bcfd.js"><link rel="prefetch" href="/assets/js/4.35661e66.js"><link rel="prefetch" href="/assets/js/40.684a77c3.js"><link rel="prefetch" href="/assets/js/41.5ef9d50f.js"><link rel="prefetch" href="/assets/js/42.444f193c.js"><link rel="prefetch" href="/assets/js/43.e6bf2917.js"><link rel="prefetch" href="/assets/js/44.6241887c.js"><link rel="prefetch" href="/assets/js/45.ee459281.js"><link rel="prefetch" href="/assets/js/46.42a39b62.js"><link rel="prefetch" href="/assets/js/47.96607b08.js"><link rel="prefetch" href="/assets/js/48.2dc75c63.js"><link rel="prefetch" href="/assets/js/49.1404ad3e.js"><link rel="prefetch" href="/assets/js/5.2a73e3c3.js"><link rel="prefetch" href="/assets/js/50.eaa708d4.js"><link rel="prefetch" href="/assets/js/51.813059e2.js"><link rel="prefetch" href="/assets/js/52.b2b30732.js"><link rel="prefetch" href="/assets/js/53.83e35218.js"><link rel="prefetch" href="/assets/js/54.5114b1c2.js"><link rel="prefetch" href="/assets/js/55.31992a29.js"><link rel="prefetch" href="/assets/js/56.9d768f0f.js"><link rel="prefetch" href="/assets/js/57.ed73a721.js"><link rel="prefetch" href="/assets/js/58.be77d415.js"><link rel="prefetch" href="/assets/js/59.8ef3b6a8.js"><link rel="prefetch" href="/assets/js/6.191aaf39.js"><link rel="prefetch" href="/assets/js/60.4fd87fd0.js"><link rel="prefetch" href="/assets/js/61.361e594c.js"><link rel="prefetch" href="/assets/js/62.3801fa63.js"><link rel="prefetch" href="/assets/js/63.fb124fab.js"><link rel="prefetch" href="/assets/js/64.bdb473d5.js"><link rel="prefetch" href="/assets/js/65.8b14388b.js"><link rel="prefetch" href="/assets/js/66.6ad4e223.js"><link rel="prefetch" href="/assets/js/67.caf1ddfb.js"><link rel="prefetch" href="/assets/js/68.84d22d1b.js"><link rel="prefetch" href="/assets/js/69.2411fe3a.js"><link rel="prefetch" href="/assets/js/7.029c4464.js"><link rel="prefetch" href="/assets/js/70.b310e685.js"><link rel="prefetch" href="/assets/js/71.0e077ea4.js"><link rel="prefetch" href="/assets/js/72.2b6d7f80.js"><link rel="prefetch" href="/assets/js/73.c3e37b24.js"><link rel="prefetch" href="/assets/js/8.37f8fc14.js"><link rel="prefetch" href="/assets/js/9.9b32826c.js">
+    <link rel="stylesheet" href="/assets/css/0.styles.35bcedcf.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/" class="home-link router-link-active"><!----> <span class="site-name">小高笔记</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/" class="nav-link">
+  首页
+</a></div><div class="nav-item"><a href="/pages/miscellaneous/reg/reg.html" class="nav-link">
+  杂记
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="前端" class="dropdown-title"><span class="title">前端</span> <span class="arrow down"></span></button> <button type="button" aria-label="前端" class="mobile-dropdown-title"><span class="title">前端</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/pages/frontend/htmlcssLearn.html" class="nav-link">
+  html+css3+移动前端
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/js.html" class="nav-link">
+  javaScript
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/jses6.html" class="nav-link">
+  javaScript-es6
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/ts.html" class="nav-link">
+  typeScript
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/nodejs.html" class="nav-link">
+  nodeJs
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/webpack/webpack.html" class="nav-link">
+  webpack
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/react/react.html" class="nav-link">
+  react
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/vue/vue.html" class="nav-link">
+  vue
+</a></li></ul></div></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="后端" class="dropdown-title"><span class="title">后端</span> <span class="arrow down"></span></button> <button type="button" aria-label="后端" class="mobile-dropdown-title"><span class="title">后端</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/pages/backend/java.html" class="nav-link">
+  java
+</a></li></ul></div></div> <!----></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/" class="nav-link">
+  首页
+</a></div><div class="nav-item"><a href="/pages/miscellaneous/reg/reg.html" class="nav-link">
+  杂记
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="前端" class="dropdown-title"><span class="title">前端</span> <span class="arrow down"></span></button> <button type="button" aria-label="前端" class="mobile-dropdown-title"><span class="title">前端</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/pages/frontend/htmlcssLearn.html" class="nav-link">
+  html+css3+移动前端
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/js.html" class="nav-link">
+  javaScript
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/jses6.html" class="nav-link">
+  javaScript-es6
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/ts.html" class="nav-link">
+  typeScript
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/nodejs.html" class="nav-link">
+  nodeJs
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/webpack/webpack.html" class="nav-link">
+  webpack
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/react/react.html" class="nav-link">
+  react
+</a></li><li class="dropdown-item"><!----> <a href="/pages/frontend/vue/vue.html" class="nav-link">
+  vue
+</a></li></ul></div></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="后端" class="dropdown-title"><span class="title">后端</span> <span class="arrow down"></span></button> <button type="button" aria-label="后端" class="mobile-dropdown-title"><span class="title">后端</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/pages/backend/java.html" class="nav-link">
+  java
+</a></li></ul></div></div> <!----></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading open"><span>react</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/pages/frontend/react/jsx语法规则/jsx语法规则.html" class="sidebar-link">jsx语法规则</a></li><li><a href="/pages/frontend/react/React面向组件编程/React面向组件编程.html" class="sidebar-link">React面向组件编程</a></li><li><section class="sidebar-group collapsable is-sub-group depth-1"><p class="sidebar-heading open"><span>react应用</span> <span class="arrow down"></span></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/pages/frontend/react/react应用/React应用-基于React脚手架.html" class="sidebar-link">React应用-基于React脚手架</a></li><li><a href="/pages/frontend/react/react应用/React脚手架配置代理/React脚手架配置代理.html" class="sidebar-link">React脚手架配置代理</a></li><li><a href="/pages/frontend/react/react应用/消息订阅-发布机制/消息订阅-发布机制.html" class="sidebar-link">消息订阅-发布机制</a></li><li><a href="/pages/frontend/react/react应用/React-路由/React-路由.html" class="active sidebar-link">React-路由</a></li><li><a href="/pages/frontend/react/react应用/redux-状态管理/redux-状态管理.html" class="sidebar-link">redux-状态管理</a></li><li><a href="/pages/frontend/react/react应用/React-路由6版本/React-路由6版本.html" class="sidebar-link">React-路由6版本</a></li></ul></section></li><li><a href="/pages/frontend/react/react拓展/react拓展.html" class="sidebar-link">react拓展</a></li></ul></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="react-路由"><a href="#react-路由" class="header-anchor">#</a> React-路由</h1> <h4 id="路由原理"><a href="#路由原理" class="header-anchor">#</a> 路由原理</h4> <p>使用浏览器<code>windows.history</code>对象，通过监听地址栏地址的变化，使得页面在指定位置跳转到相应的组件。</p> <h4 id="react-router的理解"><a href="#react-router的理解" class="header-anchor">#</a> react-router的理解</h4> <p>react-router分为三种，一种是专门为web服务的react-router-dom，一种是为native原生服务的，另一种是any，任意都可以。</p> <h4 id="react-router-dom的基本使用"><a href="#react-router-dom的基本使用" class="header-anchor">#</a> react-router-dom的基本使用</h4> <ol><li><p>路由组件需要包裹在<code>BrowserRouter</code>组件或者<code>HashRouter</code>组件里才能正确使用，所以要在<code>index.jsx</code>入口文件在<code>app</code>组件外部包裹<code>BrowserRouter</code>组件或者<code>HashRouter</code>组件。</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import {BrowserRouter} from 'react-router-dom'
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+    &lt;BrowserRouter&gt;
+      &lt;App /&gt;
+    &lt;/BrowserRouter&gt;
+);
+</code></pre></div></li> <li><p>使用<code>Link</code>组件可以做路由导航，<code>Route</code>组件可以导航到相应的组件。</p> <p><code>Link</code>组件中接收一个<code>to</code>属性表示要跳转到的地址</p> <p><code>Route</code>组件接收一个<code>path</code>属性表示对应的地址，<code>component</code>属性表示该地址对应的组件</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>import React,{Component} from &quot;react&quot;;
+import {Link,Route} from 'react-router-dom'
+import About from './components/About'
+import Home from './components/Home'
+import './app.css'
+export default class App extends Component{
+    render(){
+        return (
+           &lt;div className=&quot;app-container&quot;&gt;
+                &lt;div className=&quot;flex-container&quot;&gt;
+                    &lt;div&gt;
+                        &lt;Link to=&quot;/home&quot; style={{display:'block'}}&gt;home&lt;/Link&gt;
+                        &lt;Link to=&quot;/about&quot; style={{display:'block'}}&gt;about&lt;/Link&gt;
+                    &lt;/div&gt;
+                    &lt;div&gt;
+                        &lt;Route path=&quot;/home&quot; component={Home} /&gt;
+                        &lt;Route path=&quot;/about&quot; component={About} /&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+           &lt;/div&gt;
+        )
+    }
+}
+
+</code></pre></div></li></ol> <h4 id="一般组件和路由组件区别"><a href="#一般组件和路由组件区别" class="header-anchor">#</a> 一般组件和路由组件区别</h4> <ol><li><p>写法不同</p> <ol><li><p>一般组件：<code>&lt;Home /&gt;</code></p></li> <li><p>路由组件：<code>&lt;Route to=&quot;/hone&quot; component={Home} /&gt;</code></p></li></ol></li> <li><p>存放的位置不同</p> <ol><li><p>一般组件：存放于component中</p></li> <li><p>路由组件：一般存放于pages文件夹中</p></li></ol></li> <li><p>接收到的props属性不同</p> <ol><li><p>一般组件：写组件标签时传递了什么，就接收到了什么</p></li> <li><p>路由组件：接收到三个固定的属性</p> <ol><li><p><code>history</code></p></li> <li><p><code>location</code></p></li> <li><p><code>match</code></p></li></ol></li></ol></li></ol> <h4 id="navlink组件的使用"><a href="#navlink组件的使用" class="header-anchor">#</a> NavLink组件的使用</h4> <p>由于<code>Link</code>组件是没有点击时命中高亮的效果，可以使用<code>NavLink</code>替换<code>Link</code>，使得点击时有高亮效果，可以自己定义样式，根据<code>activeClassName</code>属性来配置样式效果。</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>&lt;NavLink activeClassName=&quot;demo&quot; to=&quot;/home&quot;&gt;Home&lt;/NavLink&gt;
+.demo{
+  background-color:blue;
+  color:white;
+}
+</code></pre></div><h4 id="二次封装navlink组件"><a href="#二次封装navlink组件" class="header-anchor">#</a> 二次封装navLink组件</h4> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>import React, { Component } from 'react'
+import { NavLink } from 'react-router-dom'
+
+export default class MyNavLink extends Component {
+  render() {
+    return (
+      &lt;NavLink {...this.props}/&gt;
+    )
+  }
+}
+
+</code></pre></div><p>使用二次封装的<code>MyNavLink</code>组件</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code> &lt;MyNavLink to=&quot;/home&quot;&gt;home&lt;/MyNavLink&gt;
+</code></pre></div><p>说明：</p> <ol><li><p><code>MyNavLink</code>组件在使用时，会把<code>MyNavLink</code>标签体内容home放入到<code>props</code>中的<code>children</code>属性。</p></li> <li><p><code>&lt;NavLink {...this.props}/&gt;</code>会把传入的属性都传入<code>NavLink</code>属性，会把<code>children</code>属性展示为<code>NavLink</code>组件的标签体内容。</p></li></ol> <h4 id="switch组件的使用"><a href="#switch组件的使用" class="header-anchor">#</a> Switch组件的使用</h4> <p>解决路由匹配效率问题，当匹配到第一个符合的路由路径组件时，就不再往下进行匹配。</p> <p>使用方式：</p> <p>在<code>Route</code>组件外包裹一个<code>Switch</code>组件就可以。</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>&lt;Switch&gt;
+    &lt;Route path=&quot;/home&quot; component={Home} /&gt;
+    &lt;Route path=&quot;/about&quot; component={About} /&gt;
+&lt;/Switch&gt;
+</code></pre></div><h4 id="多级路径刷新页面样式丢失问题"><a href="#多级路径刷新页面样式丢失问题" class="header-anchor">#</a> 多级路径刷新页面样式丢失问题</h4> <p>刷新后，由于获取样式网络请求路径不对，请求不到所在的样式文件，请求不存在的路径内容，<code>webpack</code>机制默认返回<code>public</code>下的<code>index.html</code>文件。</p> <p>解决办法：</p> <ol><li><p>在<code>index.html</code>中引入样式时不写<code>./</code>，写<code>/</code></p></li> <li><p>在<code>index.html</code>中引入样式时不写<code>./</code>，写<code>%PUBLIC_URL%</code></p></li> <li><p>使用<code>HashRouter</code>，不使用<code>BroswerRouter</code></p></li></ol> <h4 id="路由模糊匹配和严格匹配"><a href="#路由模糊匹配和严格匹配" class="header-anchor">#</a> 路由模糊匹配和严格匹配</h4> <p><code>Route</code>组件默认是模糊匹配，想要开启严格匹配，需要添加<code>exact</code>属性即可。</p> <p><strong>注意</strong>：</p> <p>严格匹配需小心使用，不然容易引起严重问题。</p> <h4 id="redirect组件的使用"><a href="#redirect组件的使用" class="header-anchor">#</a> Redirect组件的使用</h4> <p>一般卸载所以注册路由组件的最下方，当所有路由都不匹配时，跳转到<code>Redirect</code>组件指定的组件。</p> <p>使用方法：</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>&lt;Redirect to=&quot;about&quot; /&gt;
+</code></pre></div><h4 id="嵌套路由"><a href="#嵌套路由" class="header-anchor">#</a> 嵌套路由</h4> <ol><li><p>注册子路由时要写上父路由的path值</p></li> <li><p>路由匹配是按照注册路由的顺序进行的</p></li></ol> <h4 id="向路由组件传递参数"><a href="#向路由组件传递参数" class="header-anchor">#</a> 向路由组件传递参数</h4> <ol><li><p>传递params参数</p> <ol><li><p>Link组件添加要传递的参数</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>&lt;Link to={`/home/message/detail/${id}/${title}`} /&gt;
+</code></pre></div></li> <li><p>注册路由组件Route声明要接收的参数</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>&lt;Route path=&quot;/home/message/detail/:id/:title&quot; component={Detail} /&gt;
+</code></pre></div></li> <li><p>在路由组件中props的match.params中得到传递过来的参数</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>this.props.match.params. //可得到传递过来的params参数
+</code></pre></div></li></ol></li> <li><p>传递search参数</p> <ol><li><p>Link组件添加要传递的参数</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>&lt;Link to={`/home/message/detail/?id=1&amp;title=xxx`} /&gt;
+</code></pre></div></li> <li><p>注册路由组件Route无需声明要接收的参数</p></li> <li><p>在路由组件中props的localtion.search中得到传递过来的search参数，再通过react带的querystring库解析</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>const {search} = this.props.location
+const result = qs.parse(search.slice(1))
+</code></pre></div></li></ol></li> <li><p>传递state参数</p> <ol><li><p>Link组件添加要传递的参数</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>&lt;Link to={{pathname:'/home/message/detail',state:{id:1,title:'xx'}}} /&gt;
+</code></pre></div></li> <li><p>注册路由组件Route无需声明要接收的参数</p></li> <li><p>在路由组件中props的location.state中得到传递过来的参数</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>this.props.location.state. //可得到传递过来的state参数
+</code></pre></div></li></ol></li></ol> <h4 id="编程式路由导航"><a href="#编程式路由导航" class="header-anchor">#</a> 编程式路由导航</h4> <p>借助<code>this.props.location</code>对象上的API对操作路由跳转，前进、后退。</p> <ol><li><p><code>push(path,state)</code></p></li> <li><p><code>replace(path,state)</code></p></li> <li><p><code>go(n)</code></p></li> <li><p><code>goBack()</code></p></li> <li><p><code>goForward()</code></p></li></ol> <h4 id="withrouter的使用"><a href="#withrouter的使用" class="header-anchor">#</a> withRouter的使用</h4> <p>withRouter方法可以加工一般组件，使其具有路由组件的某些API进行路由操作。</p> <ol><li><p>引入withRouter</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>import {withRouter} from 'react-router-dom'
+</code></pre></div></li> <li><p>使用withRouter</p> <div class="language-react&amp;#x20;jsx extra-class"><pre class="language-text"><code>class Header extends Component {
+  .........
+}
+export default withRouter(Header)
+</code></pre></div></li></ol></div> <footer class="page-edit"><!----> <!----></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/pages/frontend/react/react应用/消息订阅-发布机制/消息订阅-发布机制.html" class="prev">
+        消息订阅-发布机制
+      </a></span> <span class="next"><a href="/pages/frontend/react/react应用/redux-状态管理/redux-状态管理.html">
+        redux-状态管理
+      </a>
+      →
+    </span></p></div> </main></div><div class="global-ui"></div></div>
+    <script src="/assets/js/app.d13f59f1.js" defer></script><script src="/assets/js/2.53646e3a.js" defer></script><script src="/assets/js/26.b27149f5.js" defer></script>
+  </body>
+</html>
