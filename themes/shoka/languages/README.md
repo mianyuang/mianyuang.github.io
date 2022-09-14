@@ -15,5 +15,5 @@ If you would like to customize the default translation, you do not need to modif
           author: 本文博主
     en:
       menu:
-        schedule: Calendar1
+        schedule: Calendar1 
     ```
