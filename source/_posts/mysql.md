@@ -561,4 +561,95 @@ show privileges;
 
 MYSQL通过`权限表来控制用户对数据库的访问`，权限表放在mysql数据库中。mysql数据库系统会根据这些权限表的内容为每个用户赋予相应的权限。这些权限表中最重要的是user表、db表。除此之外，还有table\_priv表、collumn\_priv表和proc\_priv表。在Mysql启动时，服务器将这些数据库表中权限信息的内容读人内存。
 
+# 角色管理
+
+角色是在8版本引入的新功能。在MYSQL中，角色是权限的集合，可以为角色添加或移除权限。用户可以被赋予角色，同时也被授予角色包含的权限。对角色进行操作需要较高的权限。并且像账户一样，角色可以拥有授予和撤销的权限。
+
+## 角色创建
+
+使用CREATE ROLE语句，创建角色
+
+```sql
+CREATE ROLE 'role_name'[@'host_name'] [,'role_name'[@'host_name']]
+
+```
+
+角色名称规则和用户类似，如果host\_name省略，默认为"%"，role\_name不可省略。
+
+## 角色赋予权限
+
+语法格式如下：
+
+```sql
+GRANT privileges ON db_name.table_name TO 'role_name'[@'host_name'];
+```
+
+privileges代表权限的名称，多个权限以逗号隔开。可使用SHOW语句查询权限名称。SHOW PRIVILEGES\G命令
+
+## 查看角色权限
+
+语法格式如下：
+
+```sql
+SHOW GRANTS FOR '角色名';
+```
+
+## 回收角色权限
+
+语法格式如下：
+
+```sql
+REVOKE privileges ON db_name.table_name FROM ‘rolename’；
+例如:撤销school_write角色插入、查询、更新在school数据库所有表的权限。
+REVOKE INSERT,SELECT,UPDATE ON school.* FROM 'school_write'@'localhost';
+```
+
+## 删除角色
+
+语法格式：
+
+```sql
+DROP ROLE role ,[role2]....
+```
+
+## 给用户赋予角色
+
+语法格式：
+
+```sql
+GRANT role,... TO user [,user2,...];
+
+```
+
+`role`代表角色，`user`代表用户。可以将多个角色同时赋予多个用户。
+
+## 激活角色
+
+**MYSQL创建了角色后，默认都是没有激活的**，也就是不能用的。必须要**手动激活才能使用**。用户才能拥有该角色的对应的权限。
+
+-   激活方式1
+
+    使用set default role 命令激活角色
+    ```sql
+    SET DEFAULT role 角色 ALL TO 用户
+    举例：为下面4个用户默认激活所有已拥有的角色：
+    SET DEFAULT role 'manager'@'localhost' ALL TO 'dev'@'localhost','dev1'@'%',...
+    ```
+-   激活方式2
+
+    将activate\_all\_roles\_on\_login设置为ON
+    ```sql
+    SET GLOBAL activate_all_roles_on_login = ON；
+    ```
+    意思是对所有角色永久激活。运行这条语句后，用户才真正拥有了赋予角色的所有权限。
+
+## 撤销用户的角色
+
+语法格式：
+
+```sql
+REVOKE role FROM user；
+举例：撤销admin用户read角色
+REVOKE read FROM 'admin'@'localhost';
+```
 
