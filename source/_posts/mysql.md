@@ -405,4 +405,160 @@ test.MYD 存储数据
 test.MYI 存储索引
 ```
 
+# 用户与权限管理
+
+## 用户管理
+
+MYSQL用户可以分为`普通用户`和`root用户`。root用户是超级管理员，拥有所有权限，包括创建用户、删除用户、和修改用户密码等管理权限；普通用户只拥有被授予的各种权限。
+
+Mysql提供了许多语句来管理用户账号，这些语句可以用来登陆和退出Mysql服务器、创建用户、删除用户、密码管理和权限管理等内容。
+
+**MYSQL数据库安全性需要通过账户管理来保证。**
+
+### 登陆MYSQL服务器
+
+```bash
+mysql -h hostname | hostIP -p port -u username -p
+```
+
+### 创建用户
+
+使用CREATE USER语句来创建新用户，**必须拥有CREATE USER权限**。每增加一个用户，都会往MYSQL.user表中添加一条记录，但**新创建的用户没有任何权限**。添加的账户已经存在，会返回一个错误。
+
+语法格式如下：
+
+用户名由用户(User)和主机名(Host)构成
+
+```sql
+CREATE USER 用户名 [IDENTIFIED BY '密码'][,用户名[IDENTIFIED BY '密码']]
+CREATE USER 'zhangsan'@'localhost' IDENTIFIED BY '123456';
+
+```
+
+### 修改用户
+
+修改用户名：
+
+```sql
+UPDATE mysql.user set USER='li4' WHERE USER='wang5';
+
+//在刷新一下 不然之前的没修改的账户还能登陆
+FLUSH PRIVILEGES;
+```
+
+### 删除用户
+
+使用`DROP USER`语句来删除`普通用户`，也可以直接在mysql.user表中删除用户。
+
+```sql
+DROP USER 用户名
+DROP USER 'lisi'@'%';
+```
+
+### 设置当前用户密码
+
+适用于root用户修改自己的密码，以及普通用户登陆后修改自己的密码。
+
+推荐使用`ALTER USER`修改用户密码
+
+旧的写法：
+
+```sql
+SET PASSWORD = PASSWORD('123456');
+```
+
+推荐写法：
+
+使用ALTER命令来修改自身密码，如下命令修改当前登陆用户的密码。
+
+```sql
+#ALTER USER写法
+ALTER USER USER(用户) IDENTIFIED BY ‘新密码’；
+
+```
+
+使用SET语句来修改当前用户密码
+
+使用root用户登陆后，可以使用SET语句来修改密码，如下：
+
+```sql
+SET PASSWORD = ‘新密码’
+```
+
+### 修改其他用户的密码
+
+root用户不仅可以修改自己的密码，还可以修改其他普通用户的密码。root登陆mysql服务器后，可以通过ALTER语句和SET语句来修改普通用户的密码。
+
+-   使用ALTER语句来修改普通用户的密码
+    ```sql
+    ALTER USER user [IDENTIFIED BY ‘新密码’]
+    例子如下：
+    ALTER USER 'lisi'@'localhost' IDENTIFIED BY 'hello';
+    ```
+-   使用SET命令来修改普通用户密码
+    ```sql
+    SET PASSWORD FOR 'username'@'hostname'='新密码'
+    ```
+
+## 权限管理
+
+查看mysql所有权限。
+
+```sql
+show privileges;
+```
+
+-   CREATE和DROP权限，可以创建新的数据库和表，或删除已有的数据库和表。
+-   SELECT、ISNERT、UPDATE、DELETE权限允许在一个数据库现有的表上实施操作。
+-   SELECT权限只有在它们真正从一个表中检索行时才被用到。
+-   INDEX权限允许创建或删除索引，INDEX适用于已有的表。
+-   ALTER权限可以使用ALTER TABLE来更改表的结构和重新命名表。
+-   CREATE ROUTINE权限用来创建保存的程序（函数和程序）ALTER ROUTINE权限用来更改和删除保存的程序，EXECUTE权限用于执行保存的程序。
+-   GRANT权限允许授权给其他用户，可用于数据库、表和保存的程序。
+-   FILE权限使用户可以使用LOAD DATA INFILE 和SELECT ...INTO OUTFILE语句读或写服务器上的文件，任何被授权FILE权限的用户都能读或者写MYSQL服务器上的任何文件。
+
+    ![](image_ZCOiPtq6fG.png)
+
+    **授予权限原则**
+    1.  只授予能满足需要的最小权限，防止用户干坏事。比如用户只是需要查询，那就只给select权限就可以了。
+    2.  创建用户的时候限制用户的登录主机，一般是限制成指定Ip或者内网IP段。
+    3.  为每个用户设置满足密码复杂度的密码。
+    4.  定期清理不需要的用户，回收权限或者删除用户。
+        **授予权限**
+    给用户授予权限有两种方式，分别是通过把`角色赋予用户给用户授权`和`直接给用户授权`。
+
+    授权命令：
+    ```sql
+    GRANT 权限1.....权限n ON 数据库名称.表名称 TO 用户名@用户地址 [IDENTIFIED BY '密码口令'];
+    例子：
+    给li4用户授予test库下所有表的CRUD权限
+    GRANT SELECT,INSERT,DELETE,UPDATE ON TEST.* TO li4@localhost;
+    授予joe用户对所有库所有表的全部权限，不包括grant权限。
+    GRANT ALL PRIVILEGES ON *.* TO joe@'%';
+    ```
+    **查看权限**
+    -   查看当前用户权限
+        ```sql
+        SHOW GRANTS;
+        SHOW GRANTS FOR CURRENT_USER;
+        SHOW GRANTS FOR CURRENT_USER();
+
+        ```
+    -   查看某用户的全局权限
+        ```sql
+        SHOW GRANTS FOR ‘user’@'主机地址';
+        ```
+    **收回权限**
+
+    使用REVOKE语句来收回权限。
+
+    收回权限命令
+    ```sql
+    REVOKE 权限1.....权限n ON 数据库名.表名 FROM 用户名@用户地址;
+    ```
+
+## 权限表
+
+MYSQL通过`权限表来控制用户对数据库的访问`，权限表放在mysql数据库中。mysql数据库系统会根据这些权限表的内容为每个用户赋予相应的权限。这些权限表中最重要的是user表、db表。除此之外，还有table\_priv表、collumn\_priv表和proc\_priv表。在Mysql启动时，服务器将这些数据库表中权限信息的内容读人内存。
+
 
