@@ -5,11 +5,11 @@ categories: 数据库
 tags:
 ---
 # Maven
-**窗口函数**
+## **窗口函数**
 
 窗口函数的作用类似于子查询中对数据进行分组，不同的是，分组操作会把分组的结果聚合成一条记录，而窗口函数是将结果置于每一条数据记录中。
 
-**窗口函数分类**
+## **窗口函数分类**
 
 可分为静态窗口函数和动态窗口函数。
 
@@ -18,11 +18,11 @@ tags:
 
 窗口函数总体上可以分为序号函数、分布函数、前后函数、首尾函数和其他函数，如下表：
 
-![](截屏2022-07-10 22.52.46.png)
+![](https://secure2.wostatic.cn/static/chjaKv7iv2haE7yWse8qVW/截屏2022-07-10 22.52.46.png?auth_key=1676450194-bv6zqSGZ5Aerx1d9GSHhJ3-0-e2326827ed80307cdeffbd921a613309)
 
 
 
-**语法结构**
+## **语法结构**
 
 ```SQL
 函数 OVER （[PARTTITION BY 字段名 ORDER BY 字段名 ASC｜DESC]）
@@ -42,9 +42,9 @@ tags:
 - ORDER BY 子句：指定窗口函数按照哪些字段进行排序。执行排序操作使窗口函数按照排序后的数据记录的顺序进行编号
 - FRAME 子句：为分区中的某个子集定义规则，可以用来作为滑动窗口使用。
 
-**分类讲解**
+## **分类讲解**
 
-**序号函数：**
+### **序号函数：**
 
 1. ROW_NUMBER函数：
 
@@ -54,7 +54,7 @@ tags:
     ![](https://secure2.wostatic.cn/static/tkp2z9SnrjbdrFqQFRZtQt/image.png?auth_key=1676450194-xbHoot1p5gLKh6Z7NJ8iJr-0-282d1f2e77292bf938ef2e4ad75c383d)
 3. DENSE_RANK函数和RANK函数相反。
 
-**分布函数**
+### **分布函数**
 
 1. PERCENT_RANK函数：
 
@@ -69,7 +69,7 @@ tags:
 
     ![](https://secure2.wostatic.cn/static/cfDBMSxkHkJoJ6r84or7zj/image.png?auth_key=1676450194-87bEyWcxRkgUT6ftZqgZCb-0-840578937ea2886ad0910747ed461b1c)
 
-**前后函数**
+### **前后函数**
 
 1. LAG(expr,n)函数：
 
@@ -82,7 +82,7 @@ tags:
 
     ![](https://secure2.wostatic.cn/static/anpu5HVe2GEtWpTz41zi1G/image.png?auth_key=1676450194-9ewSkB5oJVH6opA67GGAA9-0-accbf3520887c003a7e4a80cde7d3e68)
 
-**首尾函数**
+### **首尾函数**
 
 1. FIRST_VALUE(expr)函数
 
@@ -91,7 +91,7 @@ tags:
     ![](https://secure2.wostatic.cn/static/qb8H52QvXWDzNhuR1x7DrN/image.png?auth_key=1676450194-ghHUUPDfV27yLpCTJG8d9K-0-6cb2967ab0718cf549d7de21a18f859b)
 2. LAST_VALUE(expr)函数：返回最后一个expr的值。
 
-**其他函数**
+### **其他函数**
 
 1. NTH_VALUE(expr，n)函数：
 
