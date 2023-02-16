@@ -2907,7 +2907,7 @@ EXPLAIN SELECT * FROM student WHERE id > 2000000 LIMIT 10;
     UPDATE accounts SET money = money - 50 WHERE NAME = 'AA';
     UPDATE accounts SET money = money + 50 WHERE NAME = 'BB';
     ```
-    ![](image/image_3BZEGqx5iL.png)
+    ![](image_3BZEGqx5iL.png)
 -   **持久性（durability）：**
 
     持久性是指一个事务一旦被提交，它对数据库中数据的改变就是 永久性的 ，接下来的其他操作和数据库 故障不应该对其有任何影响。
@@ -2942,7 +2942,7 @@ ACID是事务的四大特征，在这四个特性中，原子性是基础，隔�
 
     一个基本的状态转换图如下所示：
 
-    ![](image/image_1eUx5EjCHa.png)
+    ![](image_1eUx5EjCHa.png)
 
 ## 如何使用事务
 
@@ -3029,7 +3029,7 @@ MySQL是一个 `客户端／服务器` 架构的软件，对于同一个服务�
 
 对于两个事务 Session A、Session B，如果事务Session A `修改了` 另一个 `未提交` 事务Session B `修改过` 的数据，那就意味着发生了 `脏写`，示意图如下：
 
-![](image/image_vNNDsKU6W3.png)
+![](image_vNNDsKU6W3.png)
 
 Session A 和 Session B 各开启了一个事务，Sesssion B 中的事务先将studentno列为1的记录的name列更新为'李四'，然后Session A中的事务接着又把这条studentno列为1的记录的name列更新为'张三'。如果之后Session B中的事务进行了回滚，那么Session A中的更新也将不复存在，这种现象称之为脏写。这时Session A中的事务就没有效果了，明明把数据更新了，最后也提交事务了，最后看到的数据什么变化也没有。这里大家对事务的隔离性比较了解的话，会发现默认隔离级别下，上面Session A中的更新语句会处于等待状态，这里只是跟大家说明一下会出现这样的现象。
 
@@ -3037,7 +3037,7 @@ Session A 和 Session B 各开启了一个事务，Sesssion B 中的事务先将
 
 对于两个事务 Session A、Session B，Session A `读取` 了已经被 Session B `更新` 但还 `没有被提交` 的字段。 之后若 Session B `回滚` ，Session A `读取` 的内容就是 `临时且无效` 的。
 
-![](image/image_-nOWbodmur.png)
+![](image_-nOWbodmur.png)
 
 Session A和Session B各开启了一个事务，Session B中的事务先将studentno列为1的记录的name列更新 为'张三'，然后Session A中的事务再去查询这条studentno为1的记录，如果读到列name的值为'张三'，而 Session B中的事务稍后进行了回滚，那么Session A中的事务相当于读到了一个不存在的数据，这种现象就称之为 `脏读` 。
 
@@ -3045,7 +3045,7 @@ Session A和Session B各开启了一个事务，Session B中的事务先将stude
 
 对于两个事务Session A、Session B，Session A `读取`了一个字段，然后 Session B `更新`了该字段。 之后 Session A `再次读取` 同一个字段， `值就不同` 了。那就意味着发生了不可重复读。
 
-![](image/image_6wWmuZd78_.png)
+![](image_6wWmuZd78_.png)
 
 我们在Session B中提交了几个 `隐式事务` （注意是隐式事务，意味着语句结束事务就提交了），这些事务 都修改了studentno列为1的记录的列name的值，每次事务提交之后，如果Session A中的事务都可以查看到最新的值，这种现象也被称之为 `不可重复读` 。
 
@@ -3053,7 +3053,7 @@ Session A和Session B各开启了一个事务，Session B中的事务先将stude
 
 对于两个事务Session A、Session B, Session A 从一个表中 `读取` 了一个字段, 然后 Session B 在该表中 插 入 了一些新的行。 之后, 如果 Session A `再次读取` 同一个表, 就会多出几行。那就意味着发生了`幻读`。
 
-![](image/image_cKfdiC86DQ.png)
+![](image_cKfdiC86DQ.png)
 
 Session A中的事务先根据条件 studentno > 0这个条件查询表student，得到了name列值为'张三'的记录； 之后Session B中提交了一个 `隐式事务` ，该事务向表student中插入了一条新记录；之后Session A中的事务 再根据相同的条件 studentno > 0查询表student，得到的结果集中包含Session B中的事务新插入的那条记 录，这种现象也被称之为 幻读 。我们把新插入的那些记录称之为 `幻影记录` 。
 
@@ -3074,17 +3074,17 @@ Session A中的事务先根据条件 studentno > 0这个条件查询表student�
 
 `SQL标准` 中规定，针对不同的隔离级别，并发事务可以发生不同严重程度的问题，具体情况如下：
 
-![](image/image_4vulWIshRa.png)
+![](image_4vulWIshRa.png)
 
 `脏写` 怎么没涉及到？因为脏写这个问题太严重了，不论是哪种隔离级别，都不允许脏写的情况发生。
 
 不同的隔离级别有不同的现象，并有不同的锁和并发机制，隔离级别越高，数据库的并发性能就越差，4 种事务隔离级别与并发性能的关系如下：
 
-![](image/image_FePRub8B6j.png)
+![](image_FePRub8B6j.png)
 
 ### MySQL支持的四种隔离级别
 
-![](image/image_axuLLY1fMT.png)
+![](image_axuLLY1fMT.png)
 
 MySQL的默认隔离级别为REPEATABLE READ，我们可以手动修改一下事务的隔离级别。
 
