@@ -2461,3 +2461,416 @@ select * from sys.innodb_lock_waits;
 ```
 
 ![](image_9H1E8MtVZW.png)
+
+# 索引优化与查询优化
+
+都有哪些维度可以进行数据库调优？简言之：
+
+-   索引失效、没有充分利用到索引——建立索引
+-   关联查询太多JOIN（设计缺陷或不得已的需求）——SQL优化
+-   服务器调优及各个参数设置（缓冲、线程数等）——调整my.cnf
+-   数据过多——分库分表
+
+关于数据库调优的知识非常分散。不同的DBMS，不同的公司，不同的职位，不同的项目遇到的问题都不尽相同。这里我们分为三个章节进行细致讲解。
+
+虽然SQL查询优化的技术有很多，但是大方向上完全可以分成`物理查询优化`和`逻辑查询优化`两大块。
+
+-   物理查询优化是通过`索引`和`表连接方式`等技术来进行优化，这里重点需要掌握索引的使用。
+-   逻辑查询优化就是通过SQL`等价变换`提升查询效率，直白一点就是说，换一种查询写法效率可能更高。
+
+## 索引失效案例
+
+Mysql中`提高性能`的一个最有效的方式是对表数据表`设计合理的索引`。索引提供了高效的访问数据方法，并且加快查询的速度，因此索引对查询的速度有着至关重要的影响。
+
+-   使用索引可以`快速的定位`表中的某条记录，从而提高数据库查询的速度，提高数据库的性能。
+-   如果查询时没有使用索引，查询语句就会扫描表中的所有记录。在数据量大的情况下，这样的查询速度会很慢。
+
+大多数情况下默认采用B+树来构建索引。其实用不用索引，最终都是优化器说了算。优化器是基于什么的优化器？基于`cost开销`，它不是`基于规则`，也不是`基于语义`。怎么开销小就怎么来。另外，SQL语句是否使用索引，跟数据库版本、数据量、数据选择度都有关系。
+
+### 全值匹配我最爱
+
+```sql
+EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE age=30;
+EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE age=30 AND classId=4;
+EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE age=30 AND classId=4 AND name = 'abcd';
+```
+
+### 最佳左前缀法则
+
+在MySQL建立联合索引时会遵守最佳左前缀原则，即最左优先，在检索数据时从联合索引的最左边开始匹配。
+
+```sql
+EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE student.age=30 AND student.name = 'abcd';
+```
+
+结论：MySQL可以为多个字段创建索引，一个索引可以包含16个字段。对于多列索引，**过滤条件要使用索引必须按照索引建立时的顺序，依次满足，一旦跳过某个字段，索引后面的字段都无法被使用**。如果查询条件中没有用这些字段中第一个字段时，多列（或联合）索引不会被使用。
+
+### 主键插入顺序
+
+我们自定义的主键列 `id` 拥有 `AUTO_INCREMENT` 属性，在插入记录时存储引擎会自动为我们填入自增的主键值。这样的主键占用空间小，顺序写入，减少页分裂。
+
+### 计算、函数、类型转换(自动或手动)导致索引失效
+
+```sql
+EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE LEFT(student.name,3) = 'abc';
+```
+
+### 类型转换导致索引失效
+
+```sql
+# 未使用到索引
+EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE name=123;
+```
+
+name=123发生类型转换，索引失效。
+
+### 范围条件右边的列索引失效
+
+```sql
+create index idx_age_name_classId on student(age,name,classId);使用到该索引
+create index idx_age_name_classId on student(age,classId，name);没有使用该索引
+EXPLAIN SELECT SQL_NO_CACHE * FROM student
+WHERE student.age=30 AND student.classId>20 AND student.name = 'abc' ;
+```
+
+应用开发中范围查询，例如：金额查询，日期查询往往都是范围查询。应将查询条件放置where语句最后。（创建的联合索引中，务必把范围涉及到的字段写在最后）
+
+### 不等于(!= 或者<>)索引失效
+
+### is null可以使用索引，is not null无法使用索引
+
+### like以通配符%开头索引失效
+
+在使用LIKE关键字进行查询的查询语句中，如果匹配字符串的第一个字符为'%'，索引就不会起作用。只有'%'不在第一个位置，索引才会起作用。
+
+### OR 前后存在非索引的列，索引失效
+
+在WHERE子句中，如果在OR前的条件列进行了索引，而在OR后的条件列没有进行索引，那么索引会失效。也就是说，**OR前后的两个条件中的列都是索引时，查询中才使用索引。**
+
+因为OR的含义就是两个只要满足一个即可，因此`只有一个条件列进行了索引是没有意义的`，只要有条件列没有进行索引，就会进行`全表扫描`，因此所以的条件列也会失效。
+
+```sql
+# 未使用到索引
+EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE age = 10 OR classid = 100;
+```
+
+因为classId字段上没有索引，所以上述查询语句没有使用索引。
+
+```sql
+#使用到索引
+EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE age = 10 OR name = 'Abel';
+```
+
+因为age字段和name字段上都有索引，所以查询中使用了索引。你能看到这里使用到了`index_merge`，简单来说index\_merge就是对age和name分别进行了扫描，然后将这两个结果集进行了合并。这样做的好处就是`避免了全表扫描`。
+
+### 数据库和表的字符集统一使用utf8mb4
+
+统一使用utf8mb4( 5.5.3版本以上支持)兼容性更好，统一字符集可以避免由于字符集转换产生的乱码。不 同的 `字符集` 进行比较前需要进行 `转换` 会造成索引失效。
+
+**一般性建议**
+
+-   对于单列索引，尽量选择针对当前query过滤性更好的索引
+-   在选择组合索引的时候，当前query中过滤性最好的字段在索引字段顺序中，位置越靠前越好。
+-   在选择组合索引的时候，尽量选择能够当前query中where子句中更多的索引。
+-   在选择组合索引的时候，如果某个字段可能出现范围查询时，尽量把这个字段放在索引次序的最后面。
+
+**总之，书写SQL语句时，尽量避免造成索引失效的情况**
+
+## 关联查询优化
+
+### 数据准备
+
+```sql
+# 分类
+CREATE TABLE IF NOT EXISTS `type` (
+`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+`card` INT(10) UNSIGNED NOT NULL,
+PRIMARY KEY (`id`)
+);
+#图书
+CREATE TABLE IF NOT EXISTS `book` (
+`bookid` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+`card` INT(10) UNSIGNED NOT NULL,
+PRIMARY KEY (`bookid`)
+);
+
+#向分类表中添加20条记录
+INSERT INTO `type`(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO `type`(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO `type`(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO `type`(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO `type`(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO `type`(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO `type`(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO `type`(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO `type`(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO `type`(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO `type`(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO `type`(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO `type`(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO `type`(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO `type`(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO `type`(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO `type`(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO `type`(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO `type`(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO `type`(card) VALUES(FLOOR(1 + (RAND() * 20)));
+
+#向图书表中添加20条记录
+INSERT INTO book(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO book(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO book(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO book(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO book(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO book(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO book(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO book(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO book(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO book(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO book(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO book(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO book(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO book(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO book(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO book(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO book(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO book(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO book(card) VALUES(FLOOR(1 + (RAND() * 20)));
+INSERT INTO book(card) VALUES(FLOOR(1 + (RAND() * 20)));
+```
+
+### 采用左外连接
+
+```sql
+EXPLAIN SELECT SQL_NO_CACHE * FROM `type` LEFT JOIN book ON type.card = book.card;
+```
+
+![](image_S6gNJkw4oM.png)
+
+结论：type 有All
+
+添加索引优化
+
+```sql
+ALTER TABLE book ADD INDEX Y ( card); #【被驱动表】，可以避免全表扫描
+EXPLAIN SELECT SQL_NO_CACHE * FROM `type` LEFT JOIN book ON type.card = book.card;
+```
+
+![](image_m8-_FadZqn.png)
+
+可以看到第二行的 type 变为了 ref，rows 也变成了优化比较明显。这是由左连接特性决定的。LEFT JOIN 条件用于确定如何从右表搜索行，左边一定都有，`所以 右边是我们的关键点,一定需要建立索引 。`
+
+### 采用内连接
+
+```sql
+drop index X on type;
+drop index Y on book;（如果已经删除了可以不用再执行该操作）
+```
+
+换成 inner join（MySQL自动选择驱动表）
+
+```sql
+EXPLAIN SELECT SQL_NO_CACHE * FROM type INNER JOIN book ON type.card=book.card;
+```
+
+![](image_BEmBssd6Wy.png)
+
+添加索引优化
+
+```sql
+ALTER TABLE book ADD INDEX Y (card);
+EXPLAIN SELECT SQL_NO_CACHE * FROM type INNER JOIN book ON type.card=book.card;
+```
+
+![](image_ZodVgj3dT-.png)
+
+```sql
+ALTER TABLE type ADD INDEX X (card);
+EXPLAIN SELECT SQL_NO_CACHE * FROM type INNER JOIN book ON type.card=book.card;
+```
+
+![](image_-pdsS3qeW-.png)
+
+对于内连接来说，查询优化器可以决定谁作为驱动表，谁作为被驱动表出现的，当连接条件中`哪个表添加了索引，哪个表就可能做为被驱动表`，两个表连接条件都没有使用索引时，数据量大的表一般也做为被驱动表。
+
+### join语句原理
+
+join方式连接多个表，本质就是各个表之间数据的循环匹配。MySQL5.5版本之前，MySQL只支持一种表间关联方式，就是嵌套循环(Nested Loop Join)。如果关联表的数据量很大，则join关联的执行时间会很长。在MySQL5.5以后的版本中，MySQL通过引入BNLJ算法来优化嵌套执行。
+
+#### 驱动表和被驱动表
+
+驱动表就是主表，被驱动表就是从表、非驱动表。
+
+-   对于内连接来说：
+
+```sql
+SELECT * FROM A JOIN B ON ...
+```
+
+A一定是驱动表吗？不一定，优化器会根据你查询语句做优化，决定先查哪张表。先查询的那张表就是驱动表，反之就是被驱动表。通过explain关键字可以查看。
+
+-   对于外连接来说：
+
+```sql
+SELECT * FROM A LEFT JOIN B ON ...
+# 或
+SELECT * FROM B RIGHT JOIN A ON ... 
+```
+
+通常，会认为A就是驱动表，B就是被驱动表。但也未必。
+
+#### Simple Nested-Loop Join (简单嵌套循环连接)
+
+算法相当简单，从表A中取出一条数据1，遍历表B，将匹配到的数据放到result.. 以此类推，驱动表A中的每一条记录与被驱动表B的记录进行判断：
+
+![](image_U5-usZeE4n.png)
+
+可以看到这种方式效率是非常低的，以上述表A数据100条，表B数据1000条计算，则A\*B=10万次。开销统计如下:
+
+![](image_djgFDLKy7J.png)
+
+当然mysql肯定不会这么粗暴的去进行表的连接，所以就出现了后面的两种对Nested-Loop Join优化算法。
+
+#### Index Nested-Loop Join （索引嵌套循环连接）
+
+ndex Nested-Loop Join其优化的思路主要是为了`减少内存表数据的匹配次数`，所以要求被驱动表上必须`有索引`才行。通过外层表匹配条件直接与内层表索引进行匹配，避免和内存表的每条记录去进行比较，这样极大的减少了对内存表的匹配次数。
+
+![](image_a_i1odK6cy.png)
+
+驱动表中的每条记录通过被驱动表的索引进行访问，因为索引查询的成本是比较固定的，故mysql优化器都倾向于使用记录数少的表作为驱动表（外表）。
+
+![](image_CUt4tg4E56.png)
+
+#### Block Nested-Loop Join（块嵌套循环连接）
+
+![](image_2kLDaUyDIE.png)
+
+注意：
+
+这里缓存的不只是关联表的列，select后面的列也会缓存起来。
+
+在一个有N个join关联的sql中会分配N-1个join buffer。所以查询的时候尽量减少不必要的字段，可以让join buffer中可以存放更多的列。
+
+![](image_nFLmNwvbVi.png)
+
+![](image_C8aYvEKsfx.png)
+
+参数设置：
+
+-   block\_nested\_loop
+
+通过`show variables like '%optimizer_switch%` 查看 `block_nested_loop`状态。默认是开启的。
+
+-   join\_buffer\_size
+
+驱动表能不能一次加载完，要看join buffer能不能存储所有的数据，默认情况下`join_buffer_size=256k`。
+
+```sql
+mysql> show variables like '%join_buffer%';
+```
+
+join\_buffer\_size的最大值在32位操作系统可以申请4G，而在64位操作系统下可以申请大于4G的Join Buffer空间（64位Windows除外，其大值会被截断为4GB并发出警告）。
+
+#### Join小结
+
+1、**整体效率比较：INLJ > BNLJ > SNLJ**
+
+2、永远用小结果集驱动大结果集（其本质就是减少外层循环的数据数量）（小的度量单位指的是表行数 \* 每行大小）
+
+```sql
+select t1.b,t2.* from t1 straight_join t2 on (t1.b=t2.b) where t2.id<=100; # 推荐
+select t1.b,t2.* from t2 straight_join t1 on (t1.b=t2.b) where t2.id<=100; # 不推荐
+```
+
+3、为被驱动表匹配的条件增加索引(减少内存表的循环匹配次数)
+
+4、增大join buffer size的大小（一次索引的数据越多，那么内层包的扫描次数就越少）
+
+5、减少驱动表不必要的字段查询（字段越少，join buffer所缓存的数据就越多）
+
+#### 6. Hash Join
+
+**从MySQL的8.0.20版本开始将废弃BNLJ，因为从MySQL8.0.18版本开始就加入了hash join默认都会使用hash join**
+
+-   Nested Loop:
+
+    对于被连接的数据子集较小的情况，Nested Loop是个较好的选择。
+-   Hash Join是做`大数据集连接`时的常用方式，优化器使用两个表中较小（相对较小）的表利用Join Key在内存中建立`散列表`，然后扫描较大的表并探测散列表，找出与Hash表匹配的行。
+    -   这种方式适合于较小的表完全可以放于内存中的情况，这样总成本就是访问两个表的成本之和。
+    -   在表很大的情况下并不能完全放入内存，这时优化器会将它分割成`若干不同的分区`，不能放入内存的部分就把该分区写入磁盘的临时段，此时要求有较大的临时段从而尽量提高I/O的性能。
+    -   它能够很好的工作于没有索引的大表和并行查询的环境中，并提供最好的性能。大多数人都说它是Join的重型升降机。Hash Join只能应用于等值连接（如WHERE A.COL1 = B.COL2），这是由Hash的特点决定的。
+
+![](image_HdALnAGpvz.png)
+
+### 小结
+
+-   保证被驱动表的JOIN字段已经创建了索引
+-   需要JOIN 的字段，数据类型保持绝对一致。
+-   LEFT JOIN 时，选择小表作为驱动表， 大表作为被驱动表 。减少外层循环的次数。
+-   INNER JOIN 时，MySQL会自动将 小结果集的表选为驱动表 。选择相信MySQL优化策略。
+-   能够直接多表关联的尽量直接关联，不用子查询。(减少查询的趟数)
+-   不建议使用子查询，建议将子查询SQL拆开结合程序多次查询，或使用 JOIN 来代替子查询。
+-   衍生表建不了索引
+
+## 子查询优化
+
+MySQL从4.1版本开始支持子查询，使用子查询可以进行SELECT语句的嵌套查询，即一个SELECT查询的结 果作为另一个SELECT语句的条件。 `子查询可以一次性完成很多逻辑上需要多个步骤才能完成的SQL操作` 。
+
+**子查询是 MySQL 的一项重要的功能，可以帮助我们通过一个 SQL 语句实现比较复杂的查询。但是，子 查询的执行效率不高。** 原因：
+
+① 执行子查询时，MySQL需要为内层查询语句的查询结果 建立一个临时表 ，然后外层查询语句从临时表 中查询记录。查询完毕后，再 撤销这些临时表 。这样会消耗过多的CPU和IO资源，产生大量的慢查询。
+
+② 子查询的结果集存储的临时表，不论是内存临时表还是磁盘临时表都 不会存在索引 ，所以查询性能会 受到一定的影响。
+
+③ 对于返回结果集比较大的子查询，其对查询性能的影响也就越大。
+
+**在MySQL中，可以使用连接（JOIN）查询来替代子查询。** 连接查询`不需要建立临时表` ，其 `速度比子查询` 要快 ，如果查询中使用索引的话，性能就会更好。
+
+> 结论：尽量不要使用NOT IN或者NOT EXISTS，用LEFT JOIN xxx ON xx WHERE xx IS NULL替代
+
+## 排序优化
+
+在MySQL中，支持两种排序方式，分别是 `FileSort` 和 `Index` 排序。
+
+-   Index 排序中，索引可以保证数据的有序性，不需要再进行排序，`效率更高`。
+-   FileSort 排序则一般在 `内存中` 进行排序，占用`CPU较多`。如果待排结果较大，会产生临时文件 I/O 到磁盘进行排序的情况，效率较低。
+
+**优化建议：**
+
+1.  SQL 中，可以在 WHERE 子句和 ORDER BY 子句中使用索引，目的是在 WHERE 子句中 `避免全表扫描` ，在 ORDER BY 子句 `避免使用 FileSort 排序` 。当然，某些情况下全表扫描，或者 FileSort 排序不一定比索引慢。但总的来说，我们还是要避免，以提高查询效率。
+2.  尽量使用 Index 完成 ORDER BY 排序。如果 WHERE 和 ORDER BY 后面是相同的列就使用单索引列； 如果不同就使用联合索引。
+3.  无法使用 Index 时，需要对 FileSort 方式进行调优。
+
+## GROUP BY优化
+
+-   group by 使用索引的原则几乎跟order by一致 ，group by 即使没有过滤条件用到索引，也可以直接使用索引。
+-   group by 先排序再分组，遵照索引建的最佳左前缀法则
+-   当无法使用索引列，增大 max\_length\_for\_sort\_data 和 sort\_buffer\_size 参数的设置
+-   where效率高于having，能写在where限定的条件就不要写在having中了
+-   减少使用order by，和业务沟通能不排序就不排序，或将排序放到程序端去做。Order by、group by、distinct这些语句较为耗费CPU，数据库的CPU资源是极其宝贵的。
+-   包含了order by、group by、distinct这些查询的语句，where条件过滤出来的结果集请保持在1000行 以内，否则SQL会很慢。
+
+## 优化分页查询
+
+![](image_4pRaxElSUg.png)
+
+**优化思路一**
+
+在索引上完成排序分页操作，最后根据主键关联回原表查询所需要的其他列内容。
+
+```sql
+EXPLAIN SELECT * FROM student t,(SELECT id FROM student ORDER BY id LIMIT 2000000,10) a WHERE t.id = a.id;
+```
+
+![](image_abjXLomiyh.png)
+
+**优化思路二**
+
+该方案适用于主键自增的表，可以把Limit 查询转换成某个位置的查询 。
+
+```sql
+EXPLAIN SELECT * FROM student WHERE id > 2000000 LIMIT 10;
+```
+
+![](image_6G8YOpxsZV.png)
+
