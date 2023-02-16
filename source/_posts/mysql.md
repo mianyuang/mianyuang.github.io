@@ -1618,3 +1618,846 @@ WHERE条件 (包括 GROUP BY、ORDER BY) 里用不到的字段不需要创建索
 表中的数据被大量更新，或者数据的使用方式被改变后，原有的一些索引可能不再需要。数据库管理员应当定期找出这些索引，将它们删除，从而减少索引对更新操作的影响。
 
 #### 不要定义夯余或重复的索引
+
+# 性能分析工具的使用
+
+## 数据库服务器的优化步骤
+
+当我们遇到数据库调优问题的时候，该如何思考呢？这里把思考的流程整理成下面这张图。
+
+整个流程划分成了 `观察（Show status）` 和 `行动（Action）` 两个部分。字母 S 的部分代表观察（会使 用相应的分析工具），字母 A 代表的部分是行动（对应分析可以采取的行动）。
+
+![](image_aqO5XMie5E.png)
+
+![](image_mkkVZQiHAC.png)
+
+我们可以通过观察了解数据库整体的运行状态，通过性能分析工具可以让我们了解执行慢的SQL都有哪些，查看具体的SQL执行计划，甚至是SQL执行中的每一步的成本代价，这样才能定位问题所在，找到了问题，再采取相应的行动。
+
+## 查看系统性能参数
+
+在MySQL中，可以使用 `SHOW STATUS` 语句查询一些MySQL数据库服务器的`性能参数、执行频率`。
+
+SHOW STATUS语句语法如下：
+
+```sql
+SHOW [GLOBAL|SESSION] STATUS LIKE '参数';
+```
+
+一些常用的性能参数如下：
+
+-   Connections：连接MySQL服务器的次数。
+-   Uptime：MySQL服务器的上线时间。
+-   Slow\_queries：慢查询的次数。
+-   Innodb\_rows\_read：Select查询返回的行数
+-   Innodb\_rows\_inserted：执行INSERT操作插入的行数
+-   Innodb\_rows\_updated：执行UPDATE操作更新的 行数
+-   Innodb\_rows\_deleted：执行DELETE操作删除的行数
+-   Com\_select：查询操作的次数。
+-   Com\_insert：插入操作的次数。对于批量插入的 INSERT 操作，只累加一次。
+-   Com\_update：更新操作 的次数。
+-   Com\_delete：删除操作的次数。
+
+若查询MySQL服务器的慢查询次数，则可以执行如下语句:
+
+```sql
+SHOW STATUS LIKE 'Slow_queries';
+```
+
+慢查询次数参数可以结合慢查询日志找出慢查询语句，然后针对慢查询语句进行`表结构优化`或者`查询语句优化`。
+
+再比如，如下的指令可以查看相关的指令情况：
+
+```sql
+SHOW STATUS LIKE 'Innodb_rows_%';
+```
+
+## 统计SQL的查询成本：last\_query\_cost
+
+一条SQL查询语句在执行前需要查询执行计划，如果存在多种执行计划的话，MySQL会计算每个执行计划所需要的成本，从中选择`成本最小`的一个作为最终执行的执行计划。
+
+如果我们想要查看某条SQL语句的查询成本，可以在执行完这条SQL语句之后，通过查看当前会话中的`last_query_cost`变量值来得到当前查询的成本。它通常也是我们`评价一个查询的执行效率`的一个常用指标。这个查询成本对应的是`SQL 语句所需要读取的读页的数量`。
+
+以student\_info 表为例：
+
+```sql
+CREATE TABLE `student_info` (
+    `id` INT(11) NOT NULL AUTO_INCREMENT,
+    `student_id` INT NOT NULL ,
+    `name` VARCHAR(20) DEFAULT NULL,
+    `course_id` INT NOT NULL ,
+    `class_id` INT(11) DEFAULT NULL,
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`)
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+```
+
+如果我们想要查询 id=900001 的记录，然后看下查询成本，我们可以直接在聚簇索引上进行查找：
+
+```sql
+SELECT student_id, class_id, NAME, create_time FROM student_info WHERE id = 900001;
+```
+
+运行结果（1 条记录，运行时间为 0.042s ）
+
+然后再看下查询优化器的成本，实际上我们只需要检索一个页即可：
+
+```sql
+mysql> SHOW STATUS LIKE 'last_query_cost';
++-----------------+----------+
+| Variable_name   |   Value  |
++-----------------+----------+
+| Last_query_cost | 1.000000 |
++-----------------+----------+
+```
+
+如果我们想要查询 id 在 900001 到 9000100 之间的学生记录呢？
+
+```sql
+SELECT student_id, class_id, NAME, create_time FROM student_info WHERE id BETWEEN 900001 AND 900100;
+```
+
+运行结果（100 条记录，运行时间为 0.046s ）：
+
+然后再看下查询优化器的成本，这时我们大概需要进行 20 个页的查询。
+
+```sql
+mysql> SHOW STATUS LIKE 'last_query_cost';
++-----------------+-----------+
+| Variable_name   |   Value   |
++-----------------+-----------+
+| Last_query_cost | 21.134453 |
++-----------------+-----------+
+```
+
+你能看到页的数量是刚才的 20 倍，但是查询的效率并没有明显的变化，实际上这两个 SQL 查询的时间 基本上一样，就是因为采用了顺序读取的方式将页面一次性加载到缓冲池中，然后再进行查找。虽然 页 数量（last\_query\_cost）增加了不少 ，但是通过缓冲池的机制，并 没有增加多少查询时间 。
+
+**使用场景：** 它对于比较开销是非常有用的，特别是我们有好几种查询方式可选的时候。
+
+SQL查询是一个动态的过程，从页加载的角度来看，我们可以得到以下两点结论：
+
+1.  `位置决定效率`。如果页就在数据库 `缓冲池` 中，那么效率是最高的，否则还需要从 `内存` 或者 `磁盘` 中进行读取，当然针对单个页的读取来说，如果页存在于内存中，会比在磁盘中读取效率高很多。
+2.  `批量决定效率`。如果我们从磁盘中对单一页进行随机读，那么效率是很低的(差不多10ms)，而采用顺序读取的方式，批量对页进行读取，平均一页的读取效率就会提升很多，甚至要快于单个页面在内存中的随机读取。
+
+所以说，遇到I/O并不用担心，方法找对了，效率还是很高的。我们首先要考虑数据存放的位置，如果是进程使用的数据就要尽量放到`缓冲池`中，其次我们可以充分利用磁盘的吞吐能力，一次性批量读取数据，这样单个页的读取效率也就得到了提升。
+
+## 定位执行慢的SQL：慢查询日志
+
+MysQL的慢查询日志，用来记录在MySQL中 `响应时间超过阀值` 的语句，具体指运行时间超过 `long_query_time` 值的SQL，则会被记录到慢查询日志中。long\_query\_time的默认值为 `10`，意思是运行10秒以上 （不含10秒）的语句，认为是超出了我们的最大忍耐时间值。
+它的主要作用是，帮助我们发现那些执行时间特别长的SQL 查询，并且有针对性地进行优化，从而提高系统的整体效率。当我们的数据库服务器发生阻塞、运行变慢的时候，检查一下慢查询日志，找到那些慢查询，对解決问题很有帮助。比如一条sql执行超过5秒钟，我们就算慢SQL，希望能收集超过5秒的sql，结合explain进行全面分析。
+默认情况下，MySQL数据库` 没有开启慢查询日志` ，需要我们手动来设置这个参数。`如果不是调优需要的话，一般不建议启动该参数`，因为开启慢查询日志会或多或少带来一定的性能影响。
+慢查询日志支持将日志记录写入文件。
+
+### 开启慢查询日志参数
+
+#### 开启 slow\_query\_log
+
+在使用前，我们需要先查下慢查询是否已经开启，使用下面这条命令即可：
+
+```sql
+mysql > show variables like '%slow_query_log';
+```
+
+![](image_u0KjnWO-Mn.png)
+
+我们可以看到 `slow_query_log=OFF`，我们可以把慢查询日志打开，注意设置变量值的时候需要使用 global，否则会报错：
+
+```sql
+mysql > set global slow_query_log='ON';
+```
+
+然后我们再来查看下慢查询日志是否开启，以及慢查询日志文件的位置：
+
+![](image_VijH4WT4FO.png)
+
+#### 修改 long\_query\_time 阈值
+
+接下来我们来看下慢查询的时间阈值设置，使用如下命令：
+
+```sql
+mysql > show variables like '%long_query_time%';
+```
+
+![](image_SQG_k2X4AJ.png)
+
+这里如果我们想把时间缩短，比如设置为 1 秒，可以这样设置：
+
+```sql
+#测试发现：设置global的方式对当前session的long_query_time失效。对新连接的客户端有效。所以可以一并
+执行下述语句
+mysql > set global long_query_time = 1;
+mysql> show global variables like '%long_query_time%';
+
+mysql> set long_query_time=1;
+mysql> show variables like '%long_query_time%';
+```
+
+![](image_MDl3s1w8gb.png)
+
+**补充：配置文件中一并设置参数**
+
+如下的方式相较于前面的命令行方式，可以看做是永久设置的方式。
+
+修改 `my.cnf` 文件，\[mysqld] 下增加或修改参数 `long_query_time、slow_query_log` 和 `slow_query_log_file` 后，然后重启 MySQL 服务器。
+
+```sql
+[mysqld]
+slow_query_log=ON  # 开启慢查询日志开关
+slow_query_log_file=/var/lib/mysql/atguigu-low.log  # 慢查询日志的目录和文件名信息
+long_query_time=3  # 设置慢查询的阈值为3秒，超出此设定值的SQL即被记录到慢查询日志
+log_output=FILE
+```
+
+如果不指定存储路径，慢查询日志默认存储到MySQL数据库的数据文件夹下。如果不指定文件名，默认文件名为hostname\_slow\.log。
+
+### 查看慢查询数目
+
+查询当前系统中有多少条慢查询记录
+
+```sql
+SHOW GLOBAL STATUS LIKE '%Slow_queries%';
+```
+
+> 补充说明：
+>
+> 除了上述变量，控制慢查询日志的还有一个系统变量：min\_examined\_row\_limit。这个变量的意思是，`查询扫描过的最少记录`。这个变量和查询执行时间，共同组成了判别一个查询是否是慢查询的条件。如果查询扫描过的记录数大于等于这个变量的值，并且查询执行时间超过long\_query\_time的值，那么，这个查询就被记录到慢查询日志中；反之，则不被记录到慢查询日志中。
+>
+> ```sql
+> show variables like 'min%';
+>
+> ```
+>
+> 这个值默认是0，与long\_query\_time=10合在一起，表示只要查询的执行时间超过10秒，哪怕一个记录也没有扫描过，都要被记录到慢查询日志中。你也可以根据需要，通过修改配置文件，来修改查询时长，或者通过SET指令，用SQL语句修改'min\_examined\_row\_limit'的值。
+
+### 慢查询日志分析工具：mysqldumpslow
+
+在生产环境中，如果要手工分析日志，查找、分析SQL，显然是个体力活，MySQL提供了日志分析工具 `mysqldumpslow` 。
+
+查看mysqldumpslow的帮助信息
+
+```sql
+mysqldumpslow --help
+```
+
+![](image_r8W6krY-bZ.png)
+
+mysqldumpslow 命令的具体参数如下：
+
+-   \-a: 不将数字抽象成N，字符串抽象成S
+-   \-s: 是表示按照何种方式排序：
+    -   c: 访问次数
+    -   l: 锁定时间
+    -   r: 返回记录
+    -   t: 查询时间
+    -   al:平均锁定时间
+    -   ar:平均返回记录数
+    -   at:平均查询时间 （默认方式）
+    -   ac:平均查询次数
+-   \-t: 即为返回前面多少条的数据；
+-   \-g: 后边搭配一个正则匹配模式，大小写不敏感的；
+
+举例：我们想要按照查询时间排序，查看前五条 SQL 语句，这样写即可：
+
+```sql
+mysqldumpslow -s t -t 5 /var/lib/mysql/atguigu01-slow.log
+```
+
+```sql
+[root@bogon ~]# mysqldumpslow -s t -t 5 /var/lib/mysql/atguigu01-slow.log
+
+Reading mysql slow query log from /var/lib/mysql/atguigu01-slow.log
+Count: 1 Time=2.39s (2s) Lock=0.00s (0s) Rows=13.0 (13), root[root]@localhost
+SELECT * FROM student WHERE name = 'S'
+
+Count: 1 Time=2.09s (2s) Lock=0.00s (0s) Rows=2.0 (2), root[root]@localhost
+SELECT * FROM student WHERE stuno = N
+
+Died at /usr/bin/mysqldumpslow line 162, <> chunk 2.
+```
+
+**工作常用参考：**
+
+```sql
+#得到返回记录集最多的10个SQL
+mysqldumpslow -s r -t 10 /var/lib/mysql/atguigu-slow.log
+
+#得到访问次数最多的10个SQL
+mysqldumpslow -s c -t 10 /var/lib/mysql/atguigu-slow.log
+
+#得到按照时间排序的前10条里面含有左连接的查询语句
+mysqldumpslow -s t -t 10 -g "left join" /var/lib/mysql/atguigu-slow.log
+
+#另外建议在使用这些命令时结合 | 和more 使用 ，否则有可能出现爆屏情况
+mysqldumpslow -s r -t 10 /var/lib/mysql/atguigu-slow.log | more
+```
+
+### 关闭慢查询日志
+
+MySQL服务器停止慢查询日志功能有两种方法：
+
+#### 方式1：永久性方式
+
+```sql
+[mysqld]
+slow_query_log=OFF
+```
+
+或者，把slow\_query\_log一项注释掉 或 删除
+
+```sql
+[mysqld]
+#slow_query_log =OFF
+```
+
+重启MySQL服务，执行如下语句查询慢日志功能。
+
+```sql
+SHOW VARIABLES LIKE '%slow%'; #查询慢查询日志所在目录
+SHOW VARIABLES LIKE '%long_query_time%'; #查询超时时长
+```
+
+#### 方式2：临时性方式
+
+使用SET语句来设置。
+
+1.  停止MySQL慢查询日志功能，具体SQL语句如下。
+    ```sql
+    SET GLOBAL slow_query_log=off;
+    ```
+2.  **重启MySQL服务**，使用SHOW语句查询慢查询日志功能信息，具体SQL语句如下。
+    ```sql
+    SHOW VARIABLES LIKE '%slow%';
+    #以及
+    SHOW VARIABLES LIKE '%long_query_time%';
+    ```
+
+### 删除慢查询日志
+
+使用SHOW语句显示慢查询日志信息，具体SQL语句如下。
+
+```sql
+SHOW VARIABLES LIKE `slow_query_log%`;
+```
+
+![](image_CkCjxOtfSC.png)
+
+从执行结果可以看出，慢查询日志的目录默认为MySQL的数据目录，在该目录下 `手动删除慢查询日志文件` 即可。
+
+使用命令 `mysqladmin flush-logs` 来重新生成查询日志文件，具体命令如下，执行完毕会在数据目录下重新生成慢查询日志文件。
+
+```sql
+mysqladmin -uroot -p flush-logs slow
+```
+
+> 提示
+> 慢查询日志都是使用mysqladmin flush-logs命令来删除重建的。使用时一定要注意，一旦执行了这个命令，慢查询日志都只存在新的日志文件中，如果需要旧的查询日志，就必须事先备份。
+
+### 查看 SQL 执行成本：SHOW PROFILE
+
+show profile 是 MySQL 提供的可以用来分析当前会话中 SQL 都做了什么、执行的资源消耗工具的情况，可用于 sql 调优的测量。`默认情况下处于关闭状态`，并保存最近15次的运行结果。
+
+我们可以在会话级别开启这个功能。
+
+```sql
+mysql > show variables like 'profiling';
+```
+
+![](image_F8XoOmgWKI.png)
+
+通过设置 profiling='ON' 来开启 show profile:
+
+```sql
+mysql > set profiling = 'ON';
+```
+
+然后执行相关的查询语句。接着看下当前会话都有哪些 profiles，使用下面这条命令：
+
+```sql
+mysql > show profiles;
+```
+
+![](image_euRB_UiXoj.png)
+
+你能看到当前会话一共有 2 个查询。如果我们想要查看最近一次查询的开销，可以使用：
+
+```sql
+mysql > show profile;
+```
+
+![](image_r5AsHltS6N.png)
+
+```sql
+mysql> show profile cpu,block io for query 2
+```
+
+![](image_tF4RQ7bBiX.png)
+
+**show profile的常用查询参数：**
+
+① ALL：显示所有的开销信息。
+
+② BLOCK IO：显示块IO开销。
+
+③ CONTEXT SWITCHES：上下文切换开销。
+
+④ CPU：显示CPU开销信息。
+
+⑤ IPC：显示发送和接收开销信息。
+
+⑥ MEMORY：显示内存开销信 息。
+
+⑦ PAGE FAULTS：显示页面错误开销信息。
+
+⑧ SOURCE：显示和Source\_function，Source\_file， Source\_line相关的开销信息。
+
+⑨ SWAPS：显示交换次数开销信息。
+
+**日常开发需注意的结论：**
+
+① `converting HEAP to MyISAM`: 查询结果太大，内存不够，数据往磁盘上搬了。
+
+② `Creating tmp table`：创建临时表。先拷贝数据到临时表，用完后再删除临时表。
+
+③ `Copying to tmp table on disk`：把内存中临时表复制到磁盘上，警惕！
+
+④ `locked`。
+
+如果在show profile诊断结果中出现了以上4条结果中的任何一条，则sql语句需要优化。
+
+**注意：**
+
+不过SHOW PROFILE命令将被弃用，我们可以从 information\_schema 中的 profiling 数据表进行查看。
+
+## 分析查询语句：EXPLAIN
+
+### 概述
+
+**定位了查询慢的SQL之后，我们就可以使用EXPLAIN或DESCRIBE工具做针对的分析查询语句。** DESCRIBE语句的使用方法与EXPLAIN语句是一样的，并且分析结果也是一样的。
+
+MYSQL中有专门负责优化SELECT语句的优化器模块，主要功能：通过计算分析系统中收集到的统计信息，为客户端请求的Query提供它认为最优的`执行计划`。
+
+这个执行计划展示了接下来具体执行查询的方式，比如多表连接的顺序是什么，对于每个表采用什么访问方法来具体执行查询等等。MYSQL为我们提供了`EXPLAIN`语句来帮助我们查看某个查询语句的具体执行计划，看懂`EXPLAIN`语句的各个输出项，可以有针对性的提升我们查询语句的性能。
+
+**能做什么？**
+
+-   表的读取顺序
+-   数据读取操作的操作类型
+-   哪些索引可以使用
+-   **哪些索引被实际使用**
+-   表之间的引用
+-   **每张表有多少行被优化器查询**
+
+### 基本语法
+
+EXPLAIN 或 DESCRIBE语句的语法形式如下：
+
+```sql
+EXPLAIN SELECT select_options
+或者
+DESCRIBE SELECT select_options
+```
+
+如果我们想看看某个查询的执行计划的话，可以在具体的查询语句前边加一个 EXPLAIN ，就像这样：
+
+```sql
+mysql> EXPLAIN SELECT 1;
+```
+
+![](image_QyM4sDcXA3.png)
+
+EXPLAIN 语句输出的各个列的作用如下：
+
+![](image_AztLQ3XyhD.png)
+
+### EXPLAIN各列作用
+
+-   **table**
+
+    不论我们的查询语句有多复杂，里边儿 包含了多少个表 ，到最后也是需要对每个表进行 单表访问 的，所 以MySQL规定EXPLAIN语句输出的每条记录都对应着某个单表的访问方法，该条记录的table列代表着该 表的表名（有时不是真实的表名字，可能是简称）。
+    ```sql
+    mysql > EXPLAIN SELECT * FROM s1;
+    ```
+    ![](image_SS_Y_FdJwB.png)
+
+    这个查询语句只涉及对s1表的单表查询，所以 `EXPLAIN` 输出中只有一条记录，其中的table列的值为s1，表明这条记录是用来说明对s1表的单表访问方法的。
+
+    下边我们看一个连接查询的执行计划
+    ```sql
+    mysql > EXPLAIN SELECT * FROM s1 INNER JOIN s2;
+    ```
+    ![](image_alRa5L1pG6.png)
+
+    可以看出这个连接查询的执行计划中有两条记录，这两条记录的table列分别是s1和s2，这两条记录用来分别说明对s1表和s2表的访问方法是什么。
+-   **id**
+
+    我们写的查询语句一般都以 SELECT 关键字开头，比较简单的查询语句里只有一个 SELECT 关键字，比 如下边这个查询语句：
+    ```sql
+    SELECT * FROM s1 WHERE key1 = 'a';
+    ```
+    稍微复杂一点的连接查询中也只有一个 SELECT 关键字，比如：
+    ```sql
+    SELECT * FROM s1 INNER JOIN s2
+    ON s1.key1 = s2.key1
+    WHERE s1.common_field = 'a';
+    ```
+    但是下边两种情况下在一条查询语句中会出现多个SELECT关键字：
+
+    ![](image_eVcUlQgeu3.png)
+    ```sql
+    mysql > EXPLAIN SELECT * FROM s1 WHERE key1 = 'a';
+    ```
+    ![](image_IDTMQaQcix.png)
+
+    对于连接查询来说，一个SELECT关键字后边的FROM字句中可以跟随多个表，所以在连接查询的执行计划中，每个表都会对应一条记录，但是这些记录的id值都是相同的，比如：
+
+    ![](image_hP1ln7gJEo.png)
+
+    可以看到，上述连接查询中参与连接的s1和s2表分别对应一条记录，但是这两条记录对应的`id`都是1。这里需要大家记住的是，**在连接查询的执行计划中，每个表都会对应一条记录，这些记录的id列的值是相同的**，出现在前边的表表示`驱动表`，出现在后面的表表示`被驱动表`。所以从上边的EXPLAIN输出中我们可以看到，查询优化器准备让s1表作为驱动表，让s2表作为被驱动表来执行查询。
+
+    对于包含子查询的查询语句来说，就可能涉及多个`SELECT`关键字，所以在\*\*包含子查询的查询语句的执行计划中，每个`SELECT`关键字都会对应一个唯一的id值，比如这样：
+    ```sql
+    mysql> EXPLAIN SELECT * FROM s1 WHERE key1 IN (SELECT key1 FROM s2) OR key3 = 'a';
+    ```
+    ![](image_ZRIQD9W9Te.png)
+
+    ![](image_PEk9EfAmpP.png)
+    ```sql
+    # 查询优化器可能对涉及子查询的查询语句进行重写，转变为多表查询的操作。  
+    mysql> EXPLAIN SELECT * FROM s1 WHERE key1 IN (SELECT key2 FROM s2 WHERE common_field = 'a');
+    ```
+    ![](image_9Cmzw5_2Uo.png)
+
+    可以看到，虽然我们的查询语句是一个子查询，但是执行计划中s1和s2表对应的记录的`id`值全部是1，这就表明`查询优化器将子查询转换为了连接查询`。
+
+    对于包含`UNION`子句的查询语句来说，每个`SELECT`关键字对应一个`id`值也是没错的，不过还是有点儿特别的东西，比方说下边的查询：
+    ```sql
+    # Union去重
+    mysql> EXPLAIN SELECT * FROM s1 UNION SELECT * FROM s2;
+    ```
+    ![](image_ZUXXUdPNtv.png)
+
+    ![](image_a_ygSkiL1H.png)
+    ```sql
+    mysql> EXPLAIN SELECT * FROM s1 UNION ALL SELECT * FROM s2;
+    ```
+    ![](image_eCMZslLq8o.png)
+
+    **小结:**
+    -   id如果相同，可以认为是一组，从上往下顺序执行
+    -   在所有组中，id值越大，优先级越高，越先执行
+    -   关注点：id号每个号码，表示一趟独立的查询, 一个sql的查询趟数越少越好
+-   select\_type
+
+    ![](image_HYRwQB3k8H.png)
+
+    ![](image_v58g8L9q6f.png)
+    -   PRIMARY
+
+        对于包含`UNION、UNION ALL`或者子查询的大查询来说，它是由几个小查询组成的，其中最左边的那个查询的`select_type`的值就是`PRIMARY`。
+    -   UNION
+
+        对于包含`UNION`或者`UNION ALL`的大查询来说，它是由几个小查询组成的，其中除了最左边的那个小查询意外，其余的小查询的`select_type`值就是UNION。
+    -   UNION RESULT
+
+        MySQL 选择使用临时表来完成`UNION`查询的去重工作，针对该临时表的查询的`select_type`就是`UNION RESULT`, 例子上边有。
+    -   SUBQUERY
+
+        如果包含子查询的查询语句不能够转为对应的`semi-join`的形式，并且该子查询是不相关子查询，并且查询优化器决定采用将该子查询物化的方案来执行该子查询时，该子查询的第一个`SELECT`关键字代表的那个查询的`select_type`就是`SUBQUERY`。
+    -   DEPENDENT SUBQUERY
+        ```sql
+        mysql> EXPLAIN SELECT * FROM s1 WHERE key1 IN (SELECT key1 FROM s2 WHERE s1.key2 = s2.key2) OR key3 = 'a';
+        ```
+        ![](image_dp3JtqSEhu.png)
+    -   DEPENDENT UNION
+        ```sql
+        mysql> EXPLAIN SELECT * FROM s1 WHERE key1 IN (SELECT key1 FROM s2 WHERE key1 = 'a' UNION SELECT key1 FROM s1 WHERE key1 = 'b');
+        ```
+        ![](image_v6cHf88D-S.png)
+    -   DERIVED
+        ```sql
+        mysql> EXPLAIN SELECT * FROM (SELECT key1, count(*) as c FROM s1 GROUP BY key1) AS derived_s1 where c > 1;
+        ```
+        ![](image_RXrTK0nL-O.png)
+
+        从执行计划中可以看出，id为2的记录就代表子查询的执行方式，它的select\_type是DERIVED, 说明该子查询是以物化的方式执行的。id为1的记录代表外层查询，大家注意看它的table列显示的是derived2，表示该查询时针对将派生表物化之后的表进行查询的。
+-   type ☆
+
+    执行计划的一条记录就代表着MySQL对某个表的 `执行查询时的访问方法` , 又称“访问类型”，其中的 `type` 列就表明了这个访问方法是啥，是较为重要的一个指标。比如，看到`type`列的值是`ref`，表明`MySQL`即将使用`ref`访问方法来执行对`s1`表的查询。
+
+    完整的访问方法如下： `system ， const ， eq_ref ， ref ， fulltext ， ref_or_null ， index_merge ， unique_subquery ， index_subquery ， range ， index ， ALL` 。
+    -   const
+
+        当我们根据主键或者唯一二级索引列与常数进行等值匹配时，对单表的访问方法就是`const`
+    -   eq\_ref
+
+        在连接查询时，如果`被驱动表是通过主键或者唯一二级索引列等值匹配的方式进行访问的（如果该主键或者唯一二级索引是联合索引的话，所有的索引列都必须进行等值比较）`。则对该被驱动表的访问方法就是eq\_ref
+    -   ref
+
+        当通过普通的二级索引列与常量进行等值匹配时来查询某个表，那么对该表的访问方法就可能是`ref`。
+    -   fulltext
+
+        全文索引
+    -   ref\_or\_null
+
+        当对普通二级索引进行等值匹配查询，该索引列的值也可以是`NULL`值时，那么对该表的访问方法就可能是`ref_or_null`。
+    -   index\_merge
+
+        一般情况下对于某个表的查询只能使用到一个索引，但单表访问方法时在某些场景下可以使用`Interseation、union、Sort-Union`这三种索引合并的方式来执行查询。我们看一下执行计划中是怎么体现MySQL使用索引合并的方式来对某个表执行查询的：
+        ```sql
+        mysql> EXPLAIN SELECT * FROM s1 WHERE key1 = 'a' OR key3 = 'a';
+        ```
+        ![](image_lwjCDWMgZa.png)
+
+        从执行计划的 `type` 列的值是 `index_merge` 就可以看出，MySQL 打算使用索引合并的方式来执行 对 s1 表的查询。
+    -   unique\_subquery
+
+        类似于两表连接中被驱动表的`eq_ref`访问方法，`unique_subquery`是针对在一些包含`IN`子查询的查询语句中，如果查询优化器决定将`IN`子查询转换为`EXISTS`子查询，而且子查询可以使用到主键进行等值匹配的话，那么该子查询执行计划的`type`列的值就是`unique_subquery`。
+    -   index\_subquery
+
+        `index_subquery` 与 `unique_subquery` 类似，只不过访问子查询中的表时使用的是普通的索引。
+    -   range
+        ```sql
+        mysql> EXPLAIN SELECT * FROM s1 WHERE key1 IN ('a', 'b', 'c');
+        ```
+        ![](image_NnsJXrWm6f.png)
+    -   index
+
+        当我们可以使用索引覆盖，但需要扫描全部的索引记录时，该表的访问方法就是`index`。
+        ```sql
+        mysql> EXPLAIN SELECT key_part2 FROM s1 WHERE key_part3 = 'a';
+        ```
+        ![](image_sVezvfZCyh.png)
+
+        上述查询中的所有列表中只有key\_part2 一个列，而且搜索条件中也只有 key\_part3 一个列，这两个列又恰好包含在idx\_key\_part这个索引中，可是搜索条件key\_part3不能直接使用该索引进行`ref`和`range`方式的访问，只能扫描整个`idx_key_part`索引的记录，所以查询计划的`type`列的值就是`index`。
+    -   ALL
+
+        全表扫描
+        \*\*小结: \*\*
+    \*\*结果值从最好到最坏依次是： \*\*
+
+    **system > const > eq\_ref > ref** > fulltext > ref\_or\_null > index\_merge > unique\_subquery > index\_subquery > **range** > **index** > **ALL**
+
+    **其中比较重要的几个提取出来（见上图中的粗体）。SQL 性能优化的目标：至少要达到 range 级别，要求是 ref 级别，最好是 consts级别。（阿里巴巴 开发手册要求）**
+-   possible\_keys和key
+
+    在EXPLAIN语句输出的执行计划中，`possible_keys`列表示在某个查询语句中，对某个列执行`单表查询时可能用到的索引`有哪些。一般查询涉及到的字段上若存在索引，则该索引将被列出，但不一定被查询使用。`key`列表示`实际用到的索引`有哪些，如果为NULL，则没有使用索引。
+-   key\_len ☆
+
+    实际使用到的索引长度 (即：字节数)
+
+    帮你检查`是否充分的利用了索引`，`值越大越好`，主要针对于联合索引，有一定的参考意义。
+
+    key\_len的长度计算公式：
+    ```sql
+    varchar(10)变长字段且允许NULL = 10 * ( character set：utf8=3,gbk=2,latin1=1)+1(NULL)+2(变长字段)
+
+    varchar(10)变长字段且不允许NULL = 10 * ( character set：utf8=3,gbk=2,latin1=1)+2(变长字段)
+
+    char(10)固定字段且允许NULL = 10 * ( character set：utf8=3,gbk=2,latin1=1)+1(NULL)
+
+    char(10)固定字段且不允许NULL = 10 * ( character set：utf8=3,gbk=2,latin1=1)
+    ```
+-   ref
+
+    ![](image_x_yU9OrrbA.png)
+-   rows ☆
+
+    预估的需要读取的记录条数，`值越小越好`。
+-   Extra ☆
+
+    `Extra`列是用来说明一些额外信息的，包含不适合在其他列中显示但十分重要的额外信息。我们可以通过这些额外信息来`更准确的理解MySQL到底将如何执行给定的查询语句`。
+    -   Impossible WHERE
+
+        当查询语句的`WHERE`子句永远为`FALSE`时将会提示该额外信息
+    -   Using where
+
+        ![](image_YloCBOdI8Z.png)
+        ```sql
+        mysql> EXPLAIN SELECT * FROM s1 WHERE common_field = 'a';
+        ```
+        ![](image_AJf_1bo43g.png)
+        ```sql
+        mysql> EXPLAIN SELECT * FROM s1 WHERE key1 = 'a' AND common_field = 'a';
+        ```
+        ![](image_17K11K709D.png)
+    -   No matching min/max row
+
+        当查询列表处有`MIN`或者`MAX`聚合函数，但是并没有符合`WHERE`子句中的搜索条件的记录时。
+    -   Using index
+
+        当我们的查询列表以及搜索条件中只包含属于某个索引的列，也就是在可以使用覆盖索引的情况下，在`Extra`列将会提示该额外信息。比方说下边这个查询中只需要用到`idx_key1`而不需要回表操作:
+        ```sql
+        mysql> EXPLAIN SELECT key1 FROM s1 WHERE key1 = 'a';
+        ```
+        ![](image_VCfdMG9dGd.png)
+    -   Using index condition
+
+        有些搜索条件中虽然出现了索引列，但却不能使用到索引，比如下边这个查询：
+        ```sql
+        SELECT * FROM s1 WHERE key1 > 'z' AND key1 LIKE '%a';
+        ```
+        ![](image_BLaPreo9CU.png)
+
+        ![](image_uAB2vf8rdN.png)
+    -   Using join buffer (Block Nested Loop)
+
+        在连接查询执行过程中，当被驱动表不能有效的利用索引加快访问速度，MySQL一般会为其分配一块名叫`join buffer`的内存块来加快查询速度，也就是我们所讲的`基于块的嵌套循环算法`。
+    -   Not exists
+
+        当我们使用左(外)连接时，如果`WHERE`子句中包含要求被驱动表的某个列等于`NULL`值的搜索条件，而且那个列是不允许存储`NULL`值的，那么在该表的执行计划的Extra列就会提示这个信息：
+        ```sql
+        mysql> EXPLAIN SELECT * FROM s1 LEFT JOIN s2 ON s1.key1 = s2.key1 WHERE s2.id IS NULL;
+        ```
+    -   Using intersect(...) 、 Using union(...) 和 Using sort\_union(...)
+
+        如果执行计划的`Extra`列出现了`Using intersect(...)`提示，说明准备使用`Intersect`索引合并的方式执行查询，括号中的`...`表示需要进行索引合并的索引名称；
+
+        如果出现`Using union(...)`提示，说明准备使用`Union`索引合并的方式执行查询;
+
+        如果出现`Using sort_union(...)`提示，说明准备使用`Sort-Union`索引合并的方式执行查询。
+    -   Zero limit
+
+        当我们的`LIMIT`子句的参数为`0`时，表示压根儿不打算从表中读取任何记录
+    -   Using filesort
+
+        有一些情况下对结果集中的记录进行排序是可以使用到索引的。
+    -   Using temporary
+
+        ![](image_Fe_gAd-6IF.png)
+
+#### &#x20;小结
+
+-   EXPLAIN不考虑各种Cache
+-   EXPLAIN不能显示MySQL在执行查询时所作的优化工作
+-   EXPLAIN不会告诉你关于触发器、存储过程的信息或用户自定义函数对查询的影响情况
+-   部分统计信息是估算的，并非精确值
+
+## EXPLAIN的进一步使用
+
+### EXPLAIN四种输出格式
+
+EXPLAIN可以输出四种格式： `传统格式` ，`JSON格式` ， `TREE格式` 以及 `可视化输出` 。用户可以根据需要选择适用于自己的格式。
+
+#### 传统格式
+
+传统格式简单明了，输出是一个表格形式，概要说明查询计划。
+
+```sql
+mysql> EXPLAIN SELECT s1.key1, s2.key1 FROM s1 LEFT JOIN s2 ON s1.key1 = s2.key1 WHERE s2.common_field IS NOT NULL;
+```
+
+![](image_oLYjmxJIyH.png)
+
+#### JSON格式
+
+第1种格式中介绍的`EXPLAIN`语句输出中缺少了一个衡量执行好坏的重要属性 —— `成本`。而JSON格式是四种格式里面输出`信息最详尽`的格式，里面包含了执行的成本信息。
+
+-   JSON格式：在EXPLAIN单词和真正的查询语句中间加上 FORMAT=JSON 。
+
+```sql
+EXPLAIN FORMAT=JSON SELECT ....
+```
+
+-   EXPLAIN的Column与JSON的对应关系
+
+    ![](image_DyooC0mhwd.png)
+
+### SHOW WARNINGS的使用
+
+在我们使用`EXPLAIN`语句查看了某个查询的执行计划后，紧接着还可以使用`SHOW WARNINGS`语句查看与这个查询的执行计划有关的一些扩展信息，比如这样：
+
+```sql
+mysql> EXPLAIN SELECT s1.key1, s2.key1 FROM s1 LEFT JOIN s2 ON s1.key1 = s2.key1 WHERE s2.common_field IS NOT NULL;
+```
+
+![](image_YOF2oiE3sH.png)
+
+```sql
+mysql> SHOW WARNINGS\G
+*************************** 1. row ***************************
+    Level: Note
+     Code: 1003
+Message: /* select#1 */ select `atguigu`.`s1`.`key1` AS `key1`,`atguigu`.`s2`.`key1`
+AS `key1` from `atguigu`.`s1` join `atguigu`.`s2` where ((`atguigu`.`s1`.`key1` =
+`atguigu`.`s2`.`key1`) and (`atguigu`.`s2`.`common_field` is not null))
+1 row in set (0.00 sec)
+```
+
+大家可以看到`SHOW WARNINGS`展示出来的信息有三个字段，分别是`Level、Code、Message`。我们最常见的就是Code为1003的信息，当Code值为1003时，`Message`字段展示的信息类似于查询优化器将我们的查询语句重写后的语句。比如我们上边的查询本来是一个左(外)连接查询，但是有一个s2.common\_field IS NOT NULL的条件，这就会导致查询优化器把左(外)连接查询优化为内连接查询，从`SHOW WARNINGS`的`Message`字段也可以看出来，原本的LEFE JOIN已经变成了JOIN。
+
+但是大家一定要注意，我们说`Message`字段展示的信息类似于查询优化器将我们的查询语句`重写后的语句`，并不是等价于，也就是说`Message`字段展示的信息并不是标准的查询语句，在很多情况下并不能直接拿到黑框框中运行，它只能作为帮助我们理解MySQL将如何执行查询语句的一个参考依据而已。
+
+## MySQL监控分析视图-sys schema
+
+![](image_fW42LsWlZO.png)
+
+### Sys schema视图摘要
+
+1.  **主机相关**：以host\_summary开头，主要汇总了IO延迟的信息。
+2.  **Innodb相关**：以innodb开头，汇总了innodb buffer信息和事务等待innodb锁的信息。
+3.  **I/o相关**：以io开头，汇总了等待I/O、I/O使用量情况。
+4.  **内存使用情况**：以memory开头，从主机、线程、事件等角度展示内存的使用情况
+5.  **连接与会话信息**：processlist和session相关视图，总结了会话相关信息。
+6.  **表相关**：以schema\_table开头的视图，展示了表的统计信息。
+7.  **索引信息**：统计了索引的使用情况，包含冗余索引和未使用的索引情况。
+8.  **语句相关**：以statement开头，包含执行全表扫描、使用临时表、排序等的语句信息。
+9.  **用户相关**：以user开头的视图，统计了用户使用的文件I/O、执行语句统计信息。
+10. **等待事件相关信息**：以wait开头，展示等待事件的延迟情况。
+
+### Sys schema视图使用场景
+
+索引情况
+
+```sql
+#1. 查询冗余索引
+select * from sys.schema_redundant_indexes;
+#2. 查询未使用过的索引
+select * from sys.schema_unused_indexes;
+#3. 查询索引的使用情况
+select index_name,rows_selected,rows_inserted,rows_updated,rows_deleted
+from sys.schema_index_statistics where table_schema='dbname';
+```
+
+表相关
+
+```sql
+# 1. 查询表的访问量
+select table_schema,table_name,sum(io_read_requests+io_write_requests) as io from
+sys.schema_table_statistics group by table_schema,table_name order by io desc;
+# 2. 查询占用bufferpool较多的表
+select object_schema,object_name,allocated,data
+from sys.innodb_buffer_stats_by_table order by allocated limit 10;
+# 3. 查看表的全表扫描情况
+select * from sys.statements_with_full_table_scans where db='dbname';
+```
+
+语句相关
+
+```sql
+#1. 监控SQL执行的频率
+select db,exec_count,query from sys.statement_analysis
+order by exec_count desc;
+#2. 监控使用了排序的SQL
+select db,exec_count,first_seen,last_seen,query
+from sys.statements_with_sorting limit 1;
+#3. 监控使用了临时表或者磁盘临时表的SQL
+select db,exec_count,tmp_tables,tmp_disk_tables,query
+from sys.statement_analysis where tmp_tables>0 or tmp_disk_tables >0
+order by (tmp_tables+tmp_disk_tables) desc;
+```
+
+IO相关
+
+```sql
+#1. 查看消耗磁盘IO的文件
+select file,avg_read,avg_write,avg_read+avg_write as avg_io
+from sys.io_global_by_file_by_bytes order by avg_read limit 10;
+```
+
+Innodb 相关
+
+```sql
+#1. 行锁阻塞情况
+select * from sys.innodb_lock_waits;
+```
+
+![](image_9H1E8MtVZW.png)
